@@ -71,6 +71,25 @@ export default function AuthModal({ onAuthSuccess }) {
     { id: 'Drainage Engineer', label: 'Drainage Engineer', icon: Radio },
   ];
 
+  // Reset helpers
+  const resetRegisterFields = () => {
+    setFullName('');
+    setRegisterEmail('');
+    setRegisterPhone('');
+    setRegisterPassword('');
+    setRegisterConfirmPassword('');
+    setRegisterRole('Citizen');
+    setErrorMsg('');
+    setSuccessMsg('');
+  };
+
+  const resetLoginFields = () => {
+    setLoginIdentifier('');
+    setLoginPassword('');
+    setErrorMsg('');
+    setSuccessMsg('');
+  };
+
   // Handle Login Submit
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -104,6 +123,8 @@ export default function AuthModal({ onAuthSuccess }) {
         localStorage.setItem('drainwatch_token', data.token);
       }
       setTimeout(() => {
+        resetLoginFields();
+        resetRegisterFields();
         onAuthSuccess(data.user, data.token);
       }, 800);
     } catch (err) {
@@ -175,6 +196,8 @@ export default function AuthModal({ onAuthSuccess }) {
       localStorage.setItem('drainwatch_token', otpData.token);
     }
     setVerifyingPhone(null);
+    resetRegisterFields();
+    resetLoginFields();
     onAuthSuccess(otpData.user, otpData.token);
   };
 
@@ -265,8 +288,8 @@ export default function AuthModal({ onAuthSuccess }) {
               className={`tab-btn ${activeTab === 'login' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTab('login');
-                setErrorMsg('');
-                setSuccessMsg('');
+                resetLoginFields();
+                resetRegisterFields();
               }}
             >
               Sign In
@@ -276,8 +299,8 @@ export default function AuthModal({ onAuthSuccess }) {
               className={`tab-btn ${activeTab === 'register' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTab('register');
-                setErrorMsg('');
-                setSuccessMsg('');
+                resetLoginFields();
+                resetRegisterFields();
               }}
             >
               Register Account
@@ -394,7 +417,11 @@ export default function AuthModal({ onAuthSuccess }) {
                 Don't have an infrastructure account?{' '}
                 <button
                   type="button"
-                  onClick={() => setActiveTab('register')}
+                  onClick={() => {
+                    setActiveTab('register');
+                    resetLoginFields();
+                    resetRegisterFields();
+                  }}
                   style={{ background: 'none', border: 'none', color: 'var(--navy-900)', fontWeight: 700, cursor: 'pointer' }}
                 >
                   Register Now
@@ -403,7 +430,7 @@ export default function AuthModal({ onAuthSuccess }) {
             </form>
           ) : (
             /* SIGN UP / REGISTER FORM */
-            <form onSubmit={handleRegisterSubmit}>
+            <form onSubmit={handleRegisterSubmit} autoComplete="off">
               <div className="form-group">
                 <label className="form-label">Full Name</label>
                 <div className="input-container">
@@ -414,6 +441,7 @@ export default function AuthModal({ onAuthSuccess }) {
                     placeholder="e.g. Marcus Vance"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
+                    autoComplete="off"
                     required
                   />
                 </div>
@@ -430,6 +458,7 @@ export default function AuthModal({ onAuthSuccess }) {
                       placeholder="name@city.gov"
                       value={registerEmail}
                       onChange={(e) => setRegisterEmail(e.target.value)}
+                      autoComplete="off"
                       required
                     />
                   </div>
@@ -445,6 +474,7 @@ export default function AuthModal({ onAuthSuccess }) {
                       placeholder="9876543210"
                       value={registerPhone}
                       onChange={(e) => setRegisterPhone(e.target.value)}
+                      autoComplete="off"
                       required
                     />
                   </div>
@@ -482,6 +512,7 @@ export default function AuthModal({ onAuthSuccess }) {
                       placeholder="Min 6 chars"
                       value={registerPassword}
                       onChange={(e) => setRegisterPassword(e.target.value)}
+                      autoComplete="new-password"
                       required
                     />
                     <button
@@ -505,6 +536,7 @@ export default function AuthModal({ onAuthSuccess }) {
                       placeholder="Re-enter password"
                       value={registerConfirmPassword}
                       onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                      autoComplete="new-password"
                       required
                     />
                     <button
@@ -564,7 +596,11 @@ export default function AuthModal({ onAuthSuccess }) {
                 Already registered?{' '}
                 <button
                   type="button"
-                  onClick={() => setActiveTab('login')}
+                  onClick={() => {
+                    setActiveTab('login');
+                    resetLoginFields();
+                    resetRegisterFields();
+                  }}
                   style={{ background: 'none', border: 'none', color: 'var(--navy-900)', fontWeight: 700, cursor: 'pointer' }}
                 >
                   Sign In
