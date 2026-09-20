@@ -15,6 +15,7 @@ import {
   MapPin,
   Clock
 } from 'lucide-react';
+import RiskComplaintsVisualizer from './RiskComplaintsVisualizer';
 
 export default function Dashboard({ user, onLogout }) {
   const [telemetry, setTelemetry] = useState([]);
@@ -241,6 +242,9 @@ export default function Dashboard({ user, onLogout }) {
           </table>
         </div>
       </div>
+
+      {/* Municipal Risk Ranking & Complaints Visualization System */}
+      <RiskComplaintsVisualizer user={user} />
     </div>
   );
 }

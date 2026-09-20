@@ -2,18 +2,20 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './auth.js';
+import complaintsRoutes from './complaints.js';
 import { initDb, pool } from './db.js';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
 
 app.use(cors());
 app.use(express.json());
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/complaints', complaintsRoutes);
 
 // System Health & Telemetry for DrainWatch
 app.get('/api/system/health', async (req, res) => {
