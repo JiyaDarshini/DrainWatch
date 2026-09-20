@@ -78,12 +78,6 @@ export default function App() {
           <span className="brand-badge">Smart Social Infrastructure</span>
         </div>
 
-        <div className="nav-status">
-          <div className="db-pill">
-            <span className={`pulse-dot ${dbStatus.connected ? '' : 'style-offline'}`}></span>
-            <span>{dbStatus.connected ? 'NEON POSTGRESQL' : 'CONNECTING DB...'}</span>
-          </div>
-        </div>
       </header>
 
       {/* Main View: Dashboard or Login/Signup */}
