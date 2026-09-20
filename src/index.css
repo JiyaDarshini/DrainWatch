@@ -53,15 +53,20 @@
   --radius-full: 9999px;
 
   /* Typography */
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'Outfit', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Times New Roman', Times, Baskerville, Georgia, serif;
+  --font-display: 'Times New Roman', Times, Baskerville, Georgia, serif;
+  --font-mono: 'Times New Roman', Times, monospace;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: inherit;
+}
+
+body, button, input, select, textarea {
+  font-family: var(--font-sans);
 }
 
 body {
