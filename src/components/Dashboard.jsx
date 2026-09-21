@@ -167,69 +167,71 @@ export default function Dashboard({ user, onLogout }) {
           </div>
         </div>
 
-        {/* View Switcher Tabs (Citizen Dashboard vs Municipal Officer Command Station) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            background: 'var(--bg-secondary)',
-            padding: '0.3rem',
-            borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--border-beige)',
-            display: 'flex',
-            gap: '0.25rem'
-          }}>
-            <button
-              onClick={() => setActiveTab('citizen')}
-              style={{
-                background: activeTab === 'citizen' ? '#FFFFFF' : 'transparent',
-                color: activeTab === 'citizen' ? 'var(--navy-900)' : 'var(--text-muted)',
-                border: 'none',
-                padding: '0.45rem 0.95rem',
-                borderRadius: '6px',
-                fontSize: '0.82rem',
-                fontWeight: activeTab === 'citizen' ? 700 : 500,
-                cursor: 'pointer',
-                boxShadow: activeTab === 'citizen' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.15s'
-              }}
-            >
-              <Sparkles size={14} color="var(--water-cyan)" />
-              <span>Citizen Dashboard</span>
-            </button>
+        {/* View Switcher Tabs (Only shown for Municipal Officers / Admins) */}
+        {user?.role !== 'Citizen' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              background: 'var(--bg-secondary)',
+              padding: '0.3rem',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-beige)',
+              display: 'flex',
+              gap: '0.25rem'
+            }}>
+              <button
+                onClick={() => setActiveTab('citizen')}
+                style={{
+                  background: activeTab === 'citizen' ? '#FFFFFF' : 'transparent',
+                  color: activeTab === 'citizen' ? 'var(--navy-900)' : 'var(--text-muted)',
+                  border: 'none',
+                  padding: '0.45rem 0.95rem',
+                  borderRadius: '6px',
+                  fontSize: '0.82rem',
+                  fontWeight: activeTab === 'citizen' ? 700 : 500,
+                  cursor: 'pointer',
+                  boxShadow: activeTab === 'citizen' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.15s'
+                }}
+              >
+                <Sparkles size={14} color="var(--water-cyan)" />
+                <span>Citizen View</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('official')}
+                style={{
+                  background: activeTab === 'official' ? '#FFFFFF' : 'transparent',
+                  color: activeTab === 'official' ? 'var(--navy-900)' : 'var(--text-muted)',
+                  border: 'none',
+                  padding: '0.45rem 0.95rem',
+                  borderRadius: '6px',
+                  fontSize: '0.82rem',
+                  fontWeight: activeTab === 'official' ? 700 : 500,
+                  cursor: 'pointer',
+                  boxShadow: activeTab === 'official' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.15s'
+                }}
+              >
+                <Activity size={14} color="var(--water-cyan)" />
+                <span>Municipal Grid & Triage</span>
+              </button>
+            </div>
 
             <button
-              onClick={() => setActiveTab('official')}
-              style={{
-                background: activeTab === 'official' ? '#FFFFFF' : 'transparent',
-                color: activeTab === 'official' ? 'var(--navy-900)' : 'var(--text-muted)',
-                border: 'none',
-                padding: '0.45rem 0.95rem',
-                borderRadius: '6px',
-                fontSize: '0.82rem',
-                fontWeight: activeTab === 'official' ? 700 : 500,
-                cursor: 'pointer',
-                boxShadow: activeTab === 'official' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.15s'
-              }}
+              onClick={fetchDashboardData}
+              className="btn-secondary-outline"
+              style={{ width: 'auto', padding: '0.5rem 0.85rem', fontSize: '0.8rem' }}
             >
-              <Activity size={14} color="var(--water-cyan)" />
-              <span>Municipal Grid & Triage</span>
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
-
-          <button
-            onClick={fetchDashboardData}
-            className="btn-secondary-outline"
-            style={{ width: 'auto', padding: '0.5rem 0.85rem', fontSize: '0.8rem' }}
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
+        )}
       </div>
 
       {/* RENDER CITIZEN DASHBOARD OR MUNICIPAL COMMAND VIEW */}

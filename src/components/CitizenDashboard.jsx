@@ -7,27 +7,21 @@ import {
   CheckCircle2, 
   Clock, 
   AlertTriangle, 
-  Waves, 
   ShieldCheck, 
-  Activity, 
   RefreshCw, 
   Navigation, 
   Image as ImageIcon,
-  ExternalLink,
   Eye,
   X,
-  PhoneCall,
   Sparkles,
-  Layers,
-  ChevronRight,
-  TrendingUp,
-  Info
+  PhoneCall,
+  Shield,
+  HelpCircle
 } from 'lucide-react';
 import CitizenComplaintModal from './CitizenComplaintModal';
 
 export default function CitizenDashboard({ user }) {
   const [complaints, setComplaints] = useState([]);
-  const [telemetry, setTelemetry] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -36,22 +30,13 @@ export default function CitizenDashboard({ user }) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [compRes, telRes] = await Promise.all([
-        fetch('/api/complaints?sortBy=created_at&order=DESC'),
-        fetch('/api/telemetry')
-      ]);
-
-      if (compRes.ok) {
-        const cData = await compRes.json();
+      const res = await fetch('/api/complaints?sortBy=created_at&order=DESC');
+      if (res.ok) {
+        const cData = await res.json();
         setComplaints(cData.complaints || []);
       }
-
-      if (telRes.ok) {
-        const tData = await telRes.json();
-        setTelemetry(tData.alerts || []);
-      }
     } catch (err) {
-      console.error('Error fetching citizen dashboard data:', err);
+      console.error('Error fetching citizen complaints:', err);
     } finally {
       setLoading(false);
     }
@@ -82,15 +67,8 @@ export default function CitizenDashboard({ user }) {
     return true;
   });
 
-  const getRiskStyle = (score) => {
-    if (score >= 80) return { bg: '#FEE2E2', border: '#EF4444', text: '#B91C1C', label: 'CRITICAL' };
-    if (score >= 60) return { bg: '#FEF3C7', border: '#F59E0B', text: '#B45309', label: 'HIGH' };
-    if (score >= 40) return { bg: '#FEF9C3', border: '#EAB308', text: '#854D0E', label: 'MODERATE' };
-    return { bg: '#DCFCE7', border: '#10B981', text: '#15803D', label: 'LOW' };
-  };
-
   return (
-    <div style={{ marginTop: '1.5rem' }}>
+    <div style={{ marginTop: '1rem' }}>
       {/* Citizen Action Hero Banner */}
       <div style={{
         background: 'linear-gradient(135deg, #0A192F 0%, #1A365D 60%, #0F223D 100%)',
@@ -103,7 +81,7 @@ export default function CitizenDashboard({ user }) {
         overflow: 'hidden',
         border: '1px solid rgba(255, 255, 255, 0.12)'
       }}>
-        {/* Glow ambient background circles */}
+        {/* Glow ambient background circle */}
         <div style={{
           position: 'absolute',
           top: '-30%',
@@ -130,14 +108,14 @@ export default function CitizenDashboard({ user }) {
               color: '#38BDF8',
               marginBottom: '0.85rem'
             }}>
-              <Sparkles size={14} /> Citizen Action & Rapid Response Portal
+              <Sparkles size={14} /> Citizen Action & Civic Response
             </div>
 
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2.1rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '0.5rem', lineHeight: 1.2 }}>
               Report a Drainage Hazard
             </h2>
             <p style={{ fontSize: '0.95rem', color: '#CBD5E1', lineHeight: 1.5, marginBottom: '1.25rem' }}>
-              Upload a <strong>photo</strong> of the issue, let GPS <strong>automatically fetch your location</strong>, and provide a quick <strong>description</strong>. Municipal response teams are dispatched based on automated risk rating.
+              Upload a <strong>photo</strong> of the issue, let GPS <strong>automatically fetch your location</strong>, and provide a brief <strong>description</strong>. Municipal field response teams are notified immediately.
             </p>
 
             {/* 3 Steps Pills */}
@@ -176,7 +154,7 @@ export default function CitizenDashboard({ user }) {
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
-              <PlusCircle size={18} /> Register New Complaint Now
+              <PlusCircle size={18} /> Register Complaint Now
             </button>
           </div>
 
@@ -187,17 +165,17 @@ export default function CitizenDashboard({ user }) {
             border: '1px solid rgba(255, 255, 255, 0.15)',
             borderRadius: 'var(--radius-md)',
             padding: '1.5rem',
-            minWidth: '260px'
+            minWidth: '240px'
           }}>
             <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.05em' }}>
-              Civic Resolution Tracker
+              My Civic Reports
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.8rem', fontWeight: 800, color: '#FFFFFF' }}>
                   {complaints.length}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Total Incidents</div>
+                <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Total Lodged</div>
               </div>
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.8rem', fontWeight: 800, color: '#38BDF8' }}>
@@ -212,10 +190,10 @@ export default function CitizenDashboard({ user }) {
                 <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Resolved</div>
               </div>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.8rem', fontWeight: 800, color: '#F59E0B' }}>
-                  ~4h
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.8rem', fontWeight: 800, color: '#FCD34D' }}>
+                  24/7
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Avg SLA Dispatch</div>
+                <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Civic Support</div>
               </div>
             </div>
           </div>
@@ -308,7 +286,6 @@ export default function CitizenDashboard({ user }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {filteredComplaints.map((item) => {
-              const risk = getRiskStyle(item.risk_score);
               const step = getStatusStep(item.status);
 
               return (
@@ -487,66 +464,49 @@ export default function CitizenDashboard({ user }) {
         )}
       </div>
 
-      {/* Local Catchment & Flood Sensor Radar */}
+      {/* Civic Assistance & Drain Safety Guidelines (Citizen-Centric) */}
       <div style={{
         background: '#FFFFFF',
         border: '1px solid var(--border-beige)',
         borderRadius: 'var(--radius-md)',
         padding: '1.5rem 1.75rem',
-        boxShadow: 'var(--shadow-sm)'
+        boxShadow: 'var(--shadow-sm)',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '1.5rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-          <div>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--navy-900)', margin: 0 }}>
-              Local Waterway & Sensor Status
-            </h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-              Live telemetry readings from municipal drainage sumps in your sector.
-            </p>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <PhoneCall size={18} color="var(--navy-600)" />
+            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--navy-900)', margin: 0 }}>
+              24/7 Civic Flood & Drainage Helpline
+            </h4>
           </div>
-          <div className="db-pill">
-            <span className="pulse-dot"></span>
-            <span>Real-time Grid</span>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            For emergency waterlogging, broken main pipelines or open manhole hazards requiring immediate cordoning:
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+            <span style={{ background: 'var(--navy-50)', color: 'var(--navy-600)', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+              📞 1800-425-0012
+            </span>
+            <span style={{ background: 'var(--navy-50)', color: 'var(--navy-600)', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+              📞 1913 (Monsoon Control)
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-          {telemetry.map((node) => (
-            <div
-              key={node.id}
-              style={{
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-beige)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '1rem'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Waves size={15} color="var(--water-cyan)" />
-                  {node.location}
-                </span>
-                <span className={`badge-pill ${node.water_level_pct > 80 ? 'badge-critical' : node.water_level_pct > 60 ? 'badge-warning' : 'badge-normal'}`} style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem' }}>
-                  {node.status}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Water Depth Level</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-900)' }}>
-                  {node.water_level_pct}%
-                </span>
-              </div>
-
-              <div style={{ width: '100%', height: '6px', background: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{
-                  width: `${node.water_level_pct}%`,
-                  height: '100%',
-                  background: node.water_level_pct > 80 ? 'var(--danger-crimson)' : node.water_level_pct > 60 ? 'var(--warning-amber)' : 'var(--water-cyan)'
-                }}></div>
-              </div>
-            </div>
-          ))}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <ShieldCheck size={18} color="var(--success-emerald)" />
+            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--navy-900)', margin: 0 }}>
+              Citizen Safety Reminders
+            </h4>
+          </div>
+          <ul style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.6, paddingLeft: '1.2rem', margin: 0 }}>
+            <li>Avoid walking or driving through submerged roads with hidden manholes.</li>
+            <li>Do not dispose of plastic waste into open storm drains or culvert intakes.</li>
+            <li>Photos with visible landmarks help municipal crews locate hazards faster.</li>
+          </ul>
         </div>
       </div>
 
