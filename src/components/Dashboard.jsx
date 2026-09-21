@@ -13,15 +13,25 @@ import {
   Building,
   CheckCircle,
   MapPin,
-  Clock
+  Clock,
+  PlusCircle,
+  User,
+  Sliders,
+  Sparkles,
+  Camera
 } from 'lucide-react';
 import RiskComplaintsVisualizer from './RiskComplaintsVisualizer';
+import CitizenDashboard from './CitizenDashboard';
+import CitizenComplaintModal from './CitizenComplaintModal';
 
 export default function Dashboard({ user, onLogout }) {
+  // Default to citizen view if user is registered as Citizen, otherwise municipal grid
+  const [activeTab, setActiveTab] = useState(user?.role === 'Citizen' ? 'citizen' : 'official');
   const [telemetry, setTelemetry] = useState([]);
   const [loading, setLoading] = useState(true);
   const [systemStats, setSystemStats] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -63,15 +73,36 @@ export default function Dashboard({ user, onLogout }) {
             <Activity size={14} className="animate-pulse" /> Live Telemetry Command Station
           </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '0.35rem' }}>
-            Welcome back, {user?.fullName || 'Infrastructure Officer'}
+            Welcome, {user?.fullName || 'Infrastructure Officer'}
           </h1>
           <p style={{ fontSize: '0.9rem', color: '#94A3B8', maxWidth: '600px' }}>
-            DrainWatch Social Infrastructure & Urban Drainage Surveillance Grid. All sensors streaming nominal telemetry.
+            DrainWatch Social Infrastructure & Urban Drainage Surveillance Grid. Real-time civic hazard logging & telemetry network.
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 2 }}>
-          <div style={{ textAlign: 'right', display: 'none', md: 'block' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 2, flexWrap: 'wrap' }}>
+          {/* Quick Register Complaint CTA */}
+          <button
+            onClick={() => setIsComplaintModalOpen(true)}
+            style={{
+              background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+              color: '#FFFFFF',
+              border: 'none',
+              padding: '0.65rem 1.25rem',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
+            }}
+          >
+            <Camera size={16} /> Register Complaint
+          </button>
+
+          <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>{user?.role || 'Citizen'}</div>
             <div style={{ fontSize: '0.75rem', color: '#38BDF8', fontFamily: 'var(--font-mono)' }}>{user?.email}</div>
           </div>
@@ -97,7 +128,7 @@ export default function Dashboard({ user, onLogout }) {
         border: '1px solid var(--border-beige)',
         borderRadius: 'var(--radius-md)',
         padding: '1.25rem 1.75rem',
-        marginBottom: '2rem',
+        marginBottom: '1.5rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -128,123 +159,196 @@ export default function Dashboard({ user, onLogout }) {
                 </span>
               )}
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', gap: '1.25rem', marginTop: '0.2rem' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', gap: '1.25rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
               <span><strong>Phone:</strong> {user?.phone}</span>
               <span><strong>Email:</strong> {user?.email}</span>
-              <span><strong>DB Instance:</strong> Neon PostgreSQL (AWS US-East-2)</span>
+              <span><strong>DB Instance:</strong> Neon PostgreSQL (Connected)</span>
             </div>
           </div>
         </div>
 
-        <button
-          onClick={fetchDashboardData}
-          className="btn-secondary-outline"
-          style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.8rem' }}
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh Telemetry
-        </button>
-      </div>
+        {/* View Switcher Tabs (Citizen Dashboard vs Municipal Officer Command Station) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            background: 'var(--bg-secondary)',
+            padding: '0.3rem',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--border-beige)',
+            display: 'flex',
+            gap: '0.25rem'
+          }}>
+            <button
+              onClick={() => setActiveTab('citizen')}
+              style={{
+                background: activeTab === 'citizen' ? '#FFFFFF' : 'transparent',
+                color: activeTab === 'citizen' ? 'var(--navy-900)' : 'var(--text-muted)',
+                border: 'none',
+                padding: '0.45rem 0.95rem',
+                borderRadius: '6px',
+                fontSize: '0.82rem',
+                fontWeight: activeTab === 'citizen' ? 700 : 500,
+                cursor: 'pointer',
+                boxShadow: activeTab === 'citizen' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                transition: 'all 0.15s'
+              }}
+            >
+              <Sparkles size={14} color="var(--water-cyan)" />
+              <span>Citizen Dashboard</span>
+            </button>
 
-      {/* Grid Stats */}
-      <div className="dash-stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon-wrapper" style={{ background: 'var(--navy-50)', color: 'var(--navy-600)' }}>
-            <Waves size={22} />
+            <button
+              onClick={() => setActiveTab('official')}
+              style={{
+                background: activeTab === 'official' ? '#FFFFFF' : 'transparent',
+                color: activeTab === 'official' ? 'var(--navy-900)' : 'var(--text-muted)',
+                border: 'none',
+                padding: '0.45rem 0.95rem',
+                borderRadius: '6px',
+                fontSize: '0.82rem',
+                fontWeight: activeTab === 'official' ? 700 : 500,
+                cursor: 'pointer',
+                boxShadow: activeTab === 'official' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                transition: 'all 0.15s'
+              }}
+            >
+              <Activity size={14} color="var(--water-cyan)" />
+              <span>Municipal Grid & Triage</span>
+            </button>
           </div>
-          <div className="stat-val">{telemetry.length || 4} Active</div>
-          <div className="stat-label">Drainage Monitoring Nodes</div>
-        </div>
 
-        <div className="stat-card">
-          <div className="stat-icon-wrapper" style={{ background: 'var(--success-bg)', color: 'var(--success-emerald)' }}>
-            <CheckCircle size={22} />
-          </div>
-          <div className="stat-val">Nominal</div>
-          <div className="stat-label">Catchment Basin Health</div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon-wrapper" style={{ background: 'var(--warning-bg)', color: 'var(--warning-amber)' }}>
-            <AlertTriangle size={22} />
-          </div>
-          <div className="stat-val">1 Node Alert</div>
-          <div className="stat-label">North Arterial #12 High Flow</div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon-wrapper" style={{ background: 'var(--bg-secondary)', color: 'var(--navy-900)' }}>
-            <Database size={22} />
-          </div>
-          <div className="stat-val">{systemStats?.registeredUsers || 1} User(s)</div>
-          <div className="stat-label">Neon DB Registered Accounts</div>
-        </div>
-      </div>
-
-      {/* Telemetry Sensor Table */}
-      <div className="data-table-card">
-        <div className="table-header">
-          <div>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--navy-900)' }}>
-              Live Waterway & Sump Telemetry
-            </h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Data synchronized directly with Neon PostgreSQL cluster. Last sync: {lastRefreshed.toLocaleTimeString()}
-            </p>
-          </div>
-          <div className="db-pill">
-            <span className="pulse-dot"></span>
-            <span>NEON POSTGRES CONNECTED</span>
-          </div>
-        </div>
-
-        <div style={{ overflowX: 'auto' }}>
-          <table className="styled-table">
-            <thead>
-              <tr>
-                <th>Location & Basin</th>
-                <th>Water Depth</th>
-                <th>Flow Velocity</th>
-                <th>Status</th>
-                <th>Telemetry Node</th>
-              </tr>
-            </thead>
-            <tbody>
-              {telemetry.map((item) => (
-                <tr key={item.id}>
-                  <td style={{ fontWeight: 600, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <MapPin size={16} color="var(--water-cyan)" />
-                    {item.location}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{ width: '80px', height: '6px', background: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div
-                          style={{
-                            width: `${item.water_level_pct}%`,
-                            height: '100%',
-                            background: item.water_level_pct > 80 ? 'var(--danger-crimson)' : item.water_level_pct > 60 ? 'var(--warning-amber)' : 'var(--water-cyan)'
-                          }}
-                        ></div>
-                      </div>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{item.water_level_pct}%</span>
-                    </div>
-                  </td>
-                  <td style={{ fontFamily: 'var(--font-mono)' }}>{item.flow_rate_m3s || '5.4'} m³/s</td>
-                  <td>
-                    <span className={`badge-pill ${item.status.includes('Critical') ? 'badge-critical' : item.status.includes('Moderate') ? 'badge-warning' : 'badge-normal'}`}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{item.reported_by}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <button
+            onClick={fetchDashboardData}
+            className="btn-secondary-outline"
+            style={{ width: 'auto', padding: '0.5rem 0.85rem', fontSize: '0.8rem' }}
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          </button>
         </div>
       </div>
 
-      {/* Municipal Risk Ranking & Complaints Visualization System */}
-      <RiskComplaintsVisualizer user={user} />
+      {/* RENDER CITIZEN DASHBOARD OR MUNICIPAL COMMAND VIEW */}
+      {activeTab === 'citizen' ? (
+        <CitizenDashboard user={user} />
+      ) : (
+        <>
+          {/* Grid Stats */}
+          <div className="dash-stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon-wrapper" style={{ background: 'var(--navy-50)', color: 'var(--navy-600)' }}>
+                <Waves size={22} />
+              </div>
+              <div className="stat-val">{telemetry.length || 4} Active</div>
+              <div className="stat-label">Drainage Monitoring Nodes</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon-wrapper" style={{ background: 'var(--success-bg)', color: 'var(--success-emerald)' }}>
+                <CheckCircle size={22} />
+              </div>
+              <div className="stat-val">Nominal</div>
+              <div className="stat-label">Catchment Basin Health</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon-wrapper" style={{ background: 'var(--warning-bg)', color: 'var(--warning-amber)' }}>
+                <AlertTriangle size={22} />
+              </div>
+              <div className="stat-val">1 Node Alert</div>
+              <div className="stat-label">North Arterial #12 High Flow</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon-wrapper" style={{ background: 'var(--bg-secondary)', color: 'var(--navy-900)' }}>
+                <Database size={22} />
+              </div>
+              <div className="stat-val">{systemStats?.registeredUsers || 1} User(s)</div>
+              <div className="stat-label">Neon DB Registered Accounts</div>
+            </div>
+          </div>
+
+          {/* Telemetry Sensor Table */}
+          <div className="data-table-card">
+            <div className="table-header">
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--navy-900)' }}>
+                  Live Waterway & Sump Telemetry
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Data synchronized directly with Neon PostgreSQL cluster. Last sync: {lastRefreshed.toLocaleTimeString()}
+                </p>
+              </div>
+              <div className="db-pill">
+                <span className="pulse-dot"></span>
+                <span>NEON POSTGRES CONNECTED</span>
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="styled-table">
+                <thead>
+                  <tr>
+                    <th>Location & Basin</th>
+                    <th>Water Depth</th>
+                    <th>Flow Velocity</th>
+                    <th>Status</th>
+                    <th>Telemetry Node</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {telemetry.map((item) => (
+                    <tr key={item.id}>
+                      <td style={{ fontWeight: 600, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <MapPin size={16} color="var(--water-cyan)" />
+                        {item.location}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ width: '80px', height: '6px', background: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                width: `${item.water_level_pct}%`,
+                                height: '100%',
+                                background: item.water_level_pct > 80 ? 'var(--danger-crimson)' : item.water_level_pct > 60 ? 'var(--warning-amber)' : 'var(--water-cyan)'
+                              }}
+                            ></div>
+                          </div>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{item.water_level_pct}%</span>
+                        </div>
+                      </td>
+                      <td style={{ fontFamily: 'var(--font-mono)' }}>{item.flow_rate_m3s || '5.4'} m³/s</td>
+                      <td>
+                        <span className={`badge-pill ${item.status.includes('Critical') ? 'badge-critical' : item.status.includes('Moderate') ? 'badge-warning' : 'badge-normal'}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{item.reported_by}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Municipal Risk Ranking & Complaints Visualization System */}
+          <RiskComplaintsVisualizer user={user} />
+        </>
+      )}
+
+      {/* Global Citizen Complaint Modal Trigger */}
+      <CitizenComplaintModal
+        isOpen={isComplaintModalOpen}
+        onClose={() => setIsComplaintModalOpen(false)}
+        onSuccess={() => {
+          fetchDashboardData();
+        }}
+        user={user}
+      />
     </div>
   );
 }

@@ -77,8 +77,18 @@ export async function initDb() {
         status VARCHAR(50) DEFAULT 'Pending Inspection',
         sla_hours_remaining INTEGER DEFAULT 24,
         description TEXT,
+        photo_url TEXT,
+        latitude NUMERIC(10, 7),
+        longitude NUMERIC(10, 7),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Ensure complaints table has photo_url, latitude, longitude columns if it already exists
+    await client.query(`
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS photo_url TEXT;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS latitude NUMERIC(10, 7);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS longitude NUMERIC(10, 7);
     `);
 
     // Seed mock telemetry if empty

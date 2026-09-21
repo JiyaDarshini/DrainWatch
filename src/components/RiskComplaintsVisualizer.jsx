@@ -21,8 +21,12 @@ import {
   CheckCircle,
   Truck,
   RefreshCw,
-  Search
+  Search,
+  Camera,
+  Image as ImageIcon,
+  Eye
 } from 'lucide-react';
+import CitizenComplaintModal from './CitizenComplaintModal';
 
 export default function RiskComplaintsVisualizer({ user }) {
   const [complaints, setComplaints] = useState([]);
@@ -33,6 +37,7 @@ export default function RiskComplaintsVisualizer({ user }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   // New Complaint Form state
   const [newTitle, setNewTitle] = useState('');
@@ -570,29 +575,58 @@ export default function RiskComplaintsVisualizer({ user }) {
                         </div>
                       </td>
 
-                      {/* Title & Category */}
+                      {/* Title, Photo & Category */}
                       <td>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.2rem' }}>
-                            <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--water-cyan)' }}>
-                              {item.complaint_id}
-                            </span>
-                            <span style={{
-                              fontSize: '0.7rem',
-                              fontWeight: 600,
-                              background: 'var(--bg-secondary)',
-                              padding: '0.15rem 0.5rem',
-                              borderRadius: '4px',
-                              color: 'var(--navy-800)'
-                            }}>
-                              {item.category}
-                            </span>
-                          </div>
-                          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)' }}>
-                            {item.title}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                            Reported by: {item.reported_by} ({item.contact_phone || 'Protected'})
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                          {item.photo_url ? (
+                            <div
+                              onClick={() => setSelectedPhoto(item.photo_url)}
+                              style={{
+                                width: '50px',
+                                height: '50px',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                border: '1px solid var(--border-beige)',
+                                flexShrink: 0,
+                                cursor: 'pointer',
+                                background: 'var(--bg-secondary)',
+                                position: 'relative'
+                              }}
+                              title="Click to view photo evidence"
+                            >
+                              <img src={item.photo_url} alt="Evidence" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <div style={{ position: 'absolute', bottom: '2px', right: '2px', background: 'rgba(0,0,0,0.6)', color: '#FFF', fontSize: '0.55rem', padding: '1px 3px', borderRadius: '2px' }}>
+                                <Camera size={8} />
+                              </div>
+                            </div>
+                          ) : null}
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.2rem' }}>
+                              <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--water-cyan)' }}>
+                                {item.complaint_id}
+                              </span>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                background: 'var(--bg-secondary)',
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '4px',
+                                color: 'var(--navy-800)'
+                              }}>
+                                {item.category}
+                              </span>
+                            </div>
+                            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)' }}>
+                              {item.title}
+                            </div>
+                            {item.description && (
+                              <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.15rem', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                "{item.description}"
+                              </div>
+                            )}
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                              Reported by: {item.reported_by} ({item.contact_phone || 'Protected'})
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -605,18 +639,30 @@ export default function RiskComplaintsVisualizer({ user }) {
                             <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--navy-900)' }}>
                               {item.location}
                             </div>
-                            <span style={{
-                              display: 'inline-block',
-                              marginTop: '0.25rem',
-                              fontSize: '0.7rem',
-                              fontWeight: 600,
-                              color: 'var(--navy-700)',
-                              background: 'var(--bg-tertiary)',
-                              padding: '0.1rem 0.45rem',
-                              borderRadius: '4px'
-                            }}>
-                              {item.zone_criticality}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.25rem' }}>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                color: 'var(--navy-700)',
+                                background: 'var(--bg-tertiary)',
+                                padding: '0.1rem 0.45rem',
+                                borderRadius: '4px'
+                              }}>
+                                {item.zone_criticality}
+                              </span>
+                              {item.latitude && item.longitude && (
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontFamily: 'var(--font-mono)',
+                                  color: 'var(--navy-600)',
+                                  background: 'var(--navy-50)',
+                                  padding: '0.1rem 0.35rem',
+                                  borderRadius: '3px'
+                                }}>
+                                  GPS: {parseFloat(item.latitude).toFixed(3)}°, {parseFloat(item.longitude).toFixed(3)}°
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -746,189 +792,82 @@ export default function RiskComplaintsVisualizer({ user }) {
         </div>
       </div>
 
-      {/* LODGE NEW COMPLAINT MODAL WITH LIVE RISK PREDICTOR */}
-      {showModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(10, 25, 47, 0.65)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '1.5rem'
-        }}>
-          <div style={{
-            background: '#FFFFFF',
-            border: '1px solid var(--border-beige)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-lg)',
-            width: '100%',
-            maxWidth: '560px',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            padding: '2rem'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 700, color: 'var(--navy-900)' }}>
-                  Lodge Infrastructure Incident
-                </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Submit report with real-time automated risk evaluation.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
-              >
-                <X size={20} />
-              </button>
+      {/* LODGE NEW COMPLAINT MODAL (WITH PHOTO + AUTO GPS + DESCRIPTION) */}
+      <CitizenComplaintModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={() => {
+          setShowModal(false);
+          loadData();
+        }}
+        user={user}
+      />
+
+      {/* FULL RESOLUTION PHOTO LIGHTBOX MODAL */}
+      {selectedPhoto && (
+        <div
+          onClick={() => setSelectedPhoto(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(7, 17, 32, 0.88)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 120,
+            padding: '1.5rem',
+            cursor: 'pointer'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '850px',
+              maxHeight: '85vh',
+              background: '#0A192F',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-lg)',
+              border: '1px solid rgba(255,255,255,0.2)'
+            }}
+          >
+            <button
+              onClick={() => setSelectedPhoto(null)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'rgba(0,0,0,0.6)',
+                border: 'none',
+                color: '#FFF',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={selectedPhoto}
+              alt="Incident Photo Evidence"
+              style={{
+                width: '100%',
+                maxHeight: '75vh',
+                objectFit: 'contain',
+                display: 'block'
+              }}
+            />
+            <div style={{ padding: '0.85rem 1.25rem', background: '#0A192F', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Citizen Verified Incident Evidence</span>
+              <span style={{ fontSize: '0.75rem', color: '#38BDF8', fontFamily: 'var(--font-mono)' }}>DrainWatch Telemetry Archive</span>
             </div>
-
-            {submitMsg && (
-              <div className="alert-banner success" style={{ marginBottom: '1rem' }}>
-                <CheckCircle2 size={16} />
-                <span>{submitMsg}</span>
-              </div>
-            )}
-
-            {/* LIVE RISK PREDICTOR BANNER */}
-            <div style={{
-              background: getRiskColor(previewRiskScore).bg,
-              border: `1.5px solid ${getRiskColor(previewRiskScore).border}`,
-              borderRadius: 'var(--radius-md)',
-              padding: '1rem',
-              marginBottom: '1.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <div>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: getRiskColor(previewRiskScore).text }}>
-                  Dynamic AI Risk Assessment Preview
-                </div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--navy-900)', marginTop: '0.2rem' }}>
-                  Classification: <strong>{getRiskColor(previewRiskScore).label}</strong>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: 800, color: getRiskColor(previewRiskScore).text }}>
-                  {previewRiskScore}/100
-                </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Estimated Score</div>
-              </div>
-            </div>
-
-            <form onSubmit={handleCreateComplaint}>
-              <div className="form-group">
-                <label className="form-label">Incident Title / Hazard Summary</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  style={{ paddingLeft: '1rem' }}
-                  placeholder="e.g. Sump backflow flooding hospital access gate"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Hazard Category</label>
-                  <select
-                    className="input-field"
-                    style={{ paddingLeft: '0.75rem' }}
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                  >
-                    <option value="Culvert Collapse">Culvert Collapse (Critical)</option>
-                    <option value="Toxic Sludge & Overflow">Toxic Sludge & Chemical Runoff</option>
-                    <option value="Sump Overflow">Sump / Basin Overflow</option>
-                    <option value="Severe Blockage">Severe Blockage (Silt/Plastics)</option>
-                    <option value="Open Manhole Hazard">Open Manhole Hazard</option>
-                    <option value="Siltation">Slow Drainage Siltation</option>
-                    <option value="Trash Grate Clog">Surface Trash Grate Clog</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Urban Zone Criticality</label>
-                  <select
-                    className="input-field"
-                    style={{ paddingLeft: '0.75rem' }}
-                    value={newZone}
-                    onChange={(e) => setNewZone(e.target.value)}
-                  >
-                    <option value="Critical Health Zone">Critical Health Zone (Hospital)</option>
-                    <option value="High Traffic Transit">High Traffic Transit / Metro</option>
-                    <option value="School Safety Zone">School Safety Zone</option>
-                    <option value="Dense Commercial">Dense Commercial District</option>
-                    <option value="Residential">Residential Community</option>
-                    <option value="Public Park">Public Park / Greenery</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Location / Landmark Address</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  style={{ paddingLeft: '1rem' }}
-                  placeholder="e.g. North Arterial Canal Siphon #7, Sector 5"
-                  value={newLocation}
-                  onChange={(e) => setNewLocation(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <div className="form-label">
-                  <span>Water Depth / Inundation Level</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{newWaterLevel}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="5"
-                  max="100"
-                  value={newWaterLevel}
-                  onChange={(e) => setNewWaterLevel(parseInt(e.target.value, 10))}
-                  style={{ width: '100%', accentColor: 'var(--navy-900)', cursor: 'pointer' }}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Field Description & Observations</label>
-                <textarea
-                  className="input-field"
-                  style={{ paddingLeft: '1rem', minHeight: '70px' }}
-                  placeholder="Provide additional details on water flow, vehicle obstruction, or structural cracks..."
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                ></textarea>
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="btn-secondary-outline"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="submit-btn"
-                  style={{ margin: 0 }}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Evaluating & Lodging...' : 'Submit & Compute Priority Rank'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}

@@ -135,19 +135,37 @@ router.get('/analytics', async (req, res) => {
 
 /**
  * POST /api/complaints
- * Submit a new complaint with automated risk scoring
+ * Submit a new complaint with automated risk scoring (supports Photo, GPS Location, Description)
  */
 router.post('/', async (req, res) => {
   try {
-    const { title, category, location, zoneCriticality, reportedBy, contactPhone, waterLevelPct, description } = req.body;
+    const { 
+      title, 
+      category = 'Severe Blockage', 
+      location, 
+      zoneCriticality, 
+      reportedBy, 
+      contactPhone, 
+      waterLevelPct, 
+      description,
+      photoUrl,
+      latitude,
+      longitude 
+    } = req.body;
 
-    if (!title || !category || !location) {
-      return res.status(400).json({ success: false, message: 'Title, category, and location are required.' });
+    if (!location && !latitude && !longitude) {
+      return res.status(400).json({ success: false, message: 'Location or GPS coordinates are required.' });
     }
+
+    const resolvedLocation = (location && location.trim()) || 
+      (latitude && longitude ? `GPS (${parseFloat(latitude).toFixed(4)}°, ${parseFloat(longitude).toFixed(4)}°)` : 'Civic Drainage Sector');
+
+    const derivedTitle = (title && title.trim()) || 
+      (description && description.trim().length > 0 ? description.trim().slice(0, 45) + (description.length > 45 ? '...' : '') : `${category} Report`);
 
     const complaintId = `DW-CMP-${Math.floor(1000 + Math.random() * 9000)}`;
     const zone = zoneCriticality || 'Residential';
-    const waterPct = parseInt(waterLevelPct, 10) || 50;
+    const waterPct = parseInt(waterLevelPct, 10) || 55;
     const riskScore = calculateRiskScore({ category, zoneCriticality: zone, waterLevelPct: waterPct });
 
     let initialStatus = 'Pending Inspection';
@@ -162,28 +180,31 @@ router.post('/', async (req, res) => {
 
     const insertRes = await pool.query(
       `INSERT INTO complaints 
-        (complaint_id, title, category, location, zone_criticality, reported_by, contact_phone, water_level_pct, risk_score, status, sla_hours_remaining, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        (complaint_id, title, category, location, zone_criticality, reported_by, contact_phone, water_level_pct, risk_score, status, sla_hours_remaining, description, photo_url, latitude, longitude)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        RETURNING *`,
       [
         complaintId,
-        title.trim(),
+        derivedTitle,
         category,
-        location.trim(),
+        resolvedLocation,
         zone,
-        reportedBy || 'Anonymous Citizen',
+        reportedBy || 'Citizen Reporter',
         contactPhone || '',
         waterPct,
         riskScore,
         initialStatus,
         slaHours,
         description || '',
+        photoUrl || null,
+        latitude ? parseFloat(latitude) : null,
+        longitude ? parseFloat(longitude) : null,
       ]
     );
 
     return res.status(201).json({
       success: true,
-      message: `Complaint lodged and ranked with Risk Score: ${riskScore}/100`,
+      message: `Complaint lodged successfully with Incident ID ${complaintId} and Priority Score: ${riskScore}/100`,
       complaint: insertRes.rows[0],
     });
   } catch (error) {
