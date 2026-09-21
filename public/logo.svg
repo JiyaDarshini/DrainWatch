@@ -1,61 +1,123 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 150" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" fill="none">
   <defs>
-    <linearGradient id="dwLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="dwPrimaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0A192F" />
       <stop offset="100%" stop-color="#071E3D" />
     </linearGradient>
+    <linearGradient id="dwWaterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#0369A1" />
+    </linearGradient>
   </defs>
 
-  <!-- D Monogram Outer & Inner Track -->
-  <path
-    d="M 22 18 H 82 C 122 18, 142 46, 142 75 C 142 104, 122 132, 82 132 H 22 C 14 132, 10 128, 10 120 V 30 C 10 22, 14 18, 22 18 Z"
-    fill="none"
-    stroke="url(#dwLogoGrad)"
-    stroke-width="15"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+  <g id="drainwatch-new-emblem">
+    <!-- Letter 'D' Body -->
+    <path
+      d="M 60 120 
+         H 170 
+         C 245 120, 290 160, 290 230 
+         C 290 300, 245 340, 170 340 
+         H 60 
+         Z"
+      fill="url(#dwPrimaryGrad)"
+    />
 
-  <path
-    d="M 32 38 H 76 C 104 38, 118 54, 118 75 C 118 96, 104 112, 76 112 H 32 V 38 Z"
-    fill="none"
-    stroke="url(#dwLogoGrad)"
-    stroke-width="6"
-    stroke-linejoin="round"
-  />
+    <!-- Inner 'D' Cutout (creating negative space for droplet) -->
+    <path
+      d="M 115 165 
+         H 165 
+         C 205 165, 230 190, 230 230 
+         C 230 270, 205 295, 165 295 
+         H 115 
+         Z"
+      fill="#FFFFFF"
+    />
 
-  <!-- W Stroke with Dynamic Wave & Arrow -->
-  <path
-    d="M 68 50 L 100 124"
-    fill="none"
-    stroke="url(#dwLogoGrad)"
-    stroke-width="18"
-    stroke-linecap="round"
-  />
+    <!-- Water Droplet Inside D -->
+    <path
+      d="M 160 165 
+         C 160 165, 125 210, 125 235 
+         C 125 255, 140 270, 160 270 
+         C 180 270, 195 255, 195 235 
+         C 195 210, 160 165, 160 165 Z"
+      fill="url(#dwPrimaryGrad)"
+    />
 
-  <path
-    d="M 98 124 C 108 100, 120 62, 134 62 C 146 62, 150 82, 158 122"
-    fill="none"
-    stroke="url(#dwLogoGrad)"
-    stroke-width="18"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+    <!-- Stream Flowing Down from Droplet -->
+    <!-- Outer Flow Contour -->
+    <path
+      d="M 152 270 
+         C 152 285, 195 288, 205 320 
+         C 212 342, 235 375, 275 385 
+         L 260 400 
+         C 220 390, 195 355, 185 330 
+         C 175 305, 135 295, 135 270 
+         Z"
+      fill="url(#dwPrimaryGrad)"
+    />
+    <!-- Flow Stream Inner Accent Lines -->
+    <path
+      d="M 168 275 
+         C 168 290, 208 298, 218 328 
+         C 225 350, 248 378, 288 392"
+      stroke="#FFFFFF"
+      stroke-width="5"
+      stroke-linecap="round"
+      fill="none"
+    />
+    <path
+      d="M 180 280 
+         C 180 295, 218 305, 228 335 
+         C 235 355, 258 382, 298 398"
+      stroke="url(#dwPrimaryGrad)"
+      stroke-width="6"
+      stroke-linecap="round"
+      fill="none"
+    />
 
-  <path
-    d="M 158 122 L 194 38"
-    fill="none"
-    stroke="url(#dwLogoGrad)"
-    stroke-width="18"
-    stroke-linecap="round"
-  />
+    <!-- Concentric Water Ripples at Bottom -->
+    <ellipse cx="270" cy="405" rx="140" ry="24" stroke="url(#dwPrimaryGrad)" stroke-width="10" fill="none" />
+    <ellipse cx="270" cy="405" rx="105" ry="17" stroke="url(#dwPrimaryGrad)" stroke-width="8" fill="none" />
+    <ellipse cx="270" cy="405" rx="70" ry="11" stroke="url(#dwPrimaryGrad)" stroke-width="6" fill="none" />
+    <ellipse cx="270" cy="405" rx="35" ry="5" stroke="url(#dwPrimaryGrad)" stroke-width="4" fill="none" />
 
-  <!-- Arrowhead at Top-Right of W -->
-  <path
-    d="M 172 35 L 216 14 L 204 58 L 190 44 Z"
-    fill="url(#dwLogoGrad)"
-    stroke="url(#dwLogoGrad)"
-    stroke-width="2"
-    stroke-linejoin="round"
-  />
+    <!-- Letter 'W' Interlocking -->
+    <path
+      d="M 235 340 
+         L 295 190 
+         L 345 310 
+         L 405 190 
+         L 445 340 
+         H 395 
+         L 375 255 
+         L 340 340 
+         H 315 
+         L 280 255 
+         L 260 340 
+         Z"
+      fill="url(#dwPrimaryGrad)"
+    />
+
+    <!-- Gauge / Speedometer / Watch Bezel Arc at Top-Right of W -->
+    <path
+      d="M 330 170 
+         A 80 80 0 1 1 475 230"
+      stroke="url(#dwPrimaryGrad)"
+      stroke-width="16"
+      stroke-linecap="round"
+      fill="none"
+    />
+
+    <!-- Gauge Dial / Watch Needle -->
+    <path
+      d="M 405 175 
+         L 445 135"
+      stroke="url(#dwPrimaryGrad)"
+      stroke-width="14"
+      stroke-linecap="round"
+    />
+    
+    <!-- Center Pivot Indicator -->
+    <circle cx="395" cy="185" r="9" fill="url(#dwPrimaryGrad)" />
+  </g>
 </svg>
