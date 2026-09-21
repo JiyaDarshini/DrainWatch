@@ -373,13 +373,13 @@ export default function CitizenComplaintModal({ isOpen, onClose, onSuccess, user
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>AI Risk Score</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', fontWeight: 800, color: riskBadge.text }}>
-                  {submissionResult.risk_score}/100 ({riskBadge.label})
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Issue Category</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--navy-900)' }}>
+                  {submissionResult.category}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>SLA Target</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Target SLA</div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-900)' }}>
                   Within {submissionResult.sla_hours_remaining || 24} Hours
                 </div>
@@ -711,52 +711,6 @@ export default function CitizenComplaintModal({ isOpen, onClose, onSuccess, user
                   onChange={(e) => setDescription(e.target.value)}
                   required
                 ></textarea>
-              </div>
-
-              {/* Water Level Slider */}
-              <div className="form-group" style={{ margin: 0 }}>
-                <div className="form-label" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                  <span>Estimated Water Depth / Inundation:</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--navy-900)' }}>
-                    {waterLevel}% ({waterLevel > 75 ? 'Severe Flooding' : waterLevel > 50 ? 'Knee Deep' : 'Ankle Depth'})
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="10"
-                  max="100"
-                  step="5"
-                  value={waterLevel}
-                  onChange={(e) => setWaterLevel(parseInt(e.target.value, 10))}
-                  style={{ width: '100%', accentColor: 'var(--navy-900)', cursor: 'pointer' }}
-                />
-              </div>
-            </div>
-
-            {/* Dynamic AI Risk Assessment Preview Banner */}
-            <div style={{
-              background: riskBadge.bg,
-              border: `1.5px solid ${riskBadge.border}`,
-              borderRadius: 'var(--radius-md)',
-              padding: '0.85rem 1.15rem',
-              marginBottom: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: riskBadge.text, letterSpacing: '0.04em' }}>
-                  ⚡ Automated Municipal Priority Calculation
-                </div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--navy-900)', marginTop: '0.15rem' }}>
-                  {riskBadge.label} — <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>Target SLA: {riskBadge.sla}</span>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: 800, color: riskBadge.text }}>
-                  {previewScore}/100
-                </div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>AI Score</div>
               </div>
             </div>
 

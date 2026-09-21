@@ -411,18 +411,18 @@ export default function CitizenDashboard({ user }) {
                           </h4>
                         </div>
 
-                        {/* Risk & Priority Badge */}
+                        {/* Category Badge */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 800,
-                            padding: '0.2rem 0.6rem',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '0.2rem 0.65rem',
                             borderRadius: '999px',
-                            background: risk.bg,
-                            color: risk.text,
-                            border: `1px solid ${risk.border}`
+                            background: 'var(--bg-secondary)',
+                            color: 'var(--navy-900)',
+                            border: '1px solid var(--border-beige)'
                           }}>
-                            Risk Score: {item.risk_score}/100 ({risk.label})
+                            {item.category}
                           </span>
                         </div>
                       </div>
