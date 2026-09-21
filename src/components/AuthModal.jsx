@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import OtpVerification from './OtpVerification';
 import ForgotPasswordModal from './ForgotPasswordModal';
+import DrainWatchLogo from './DrainWatchLogo';
 
 export default function AuthModal({ onAuthSuccess }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
@@ -223,6 +224,20 @@ export default function AuthModal({ onAuthSuccess }) {
           <div className="hero-bottom-orb"></div>
 
           <div className="hero-header">
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#FFFFFF',
+                padding: '0.65rem 1rem',
+                borderRadius: '16px',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25)',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
+                <DrainWatchLogo size={46} color="#0A192F" />
+              </div>
+            </div>
             <div className="hero-tag">
               <Shield size={14} />
               <span>Smart Social Infrastructure Network</span>

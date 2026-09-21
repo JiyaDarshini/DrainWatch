@@ -3,6 +3,8 @@ import { Waves, Shield, Database, Radio, CheckCircle, Smartphone } from 'lucide-
 import AuthModal from './components/AuthModal';
 import Dashboard from './components/Dashboard';
 
+import DrainWatchLogo from './components/DrainWatchLogo';
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('drainwatch_token') || null);
@@ -70,7 +72,7 @@ export default function App() {
       <header className="top-navbar">
         <div className="brand-logo">
           <div className="logo-badge">
-            <Waves size={24} />
+            <DrainWatchLogo size={36} color="#0A192F" />
           </div>
           <div className="brand-name">
             Drain<span>Watch</span>
@@ -78,6 +80,12 @@ export default function App() {
           <span className="brand-badge">Smart Social Infrastructure</span>
         </div>
 
+        <div className="nav-status">
+          <div className="db-pill">
+            <span className={`pulse-dot ${dbStatus.connected ? '' : 'offline'}`} style={{ backgroundColor: dbStatus.connected ? '#10B981' : '#F59E0B' }}></span>
+            <span>{dbStatus.connected ? 'Neon Cloud Connected' : 'Telemetry Grid Ready'}</span>
+          </div>
+        </div>
       </header>
 
       {/* Main View: Dashboard or Login/Signup */}

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 150" fill="none">
+  <defs>
+    <linearGradient id="dwLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A192F" />
+      <stop offset="100%" stop-color="#071E3D" />
+    </linearGradient>
+  </defs>
+
+  <!-- D Monogram Outer & Inner Track -->
+  <path
+    d="M 22 18 H 82 C 122 18, 142 46, 142 75 C 142 104, 122 132, 82 132 H 22 C 14 132, 10 128, 10 120 V 30 C 10 22, 14 18, 22 18 Z"
+    fill="none"
+    stroke="url(#dwLogoGrad)"
+    stroke-width="15"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <path
+    d="M 32 38 H 76 C 104 38, 118 54, 118 75 C 118 96, 104 112, 76 112 H 32 V 38 Z"
+    fill="none"
+    stroke="url(#dwLogoGrad)"
+    stroke-width="6"
+    stroke-linejoin="round"
+  />
+
+  <!-- W Stroke with Dynamic Wave & Arrow -->
+  <path
+    d="M 68 50 L 100 124"
+    fill="none"
+    stroke="url(#dwLogoGrad)"
+    stroke-width="18"
+    stroke-linecap="round"
+  />
+
+  <path
+    d="M 98 124 C 108 100, 120 62, 134 62 C 146 62, 150 82, 158 122"
+    fill="none"
+    stroke="url(#dwLogoGrad)"
+    stroke-width="18"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <path
+    d="M 158 122 L 194 38"
+    fill="none"
+    stroke="url(#dwLogoGrad)"
+    stroke-width="18"
+    stroke-linecap="round"
+  />
+
+  <!-- Arrowhead at Top-Right of W -->
+  <path
+    d="M 172 35 L 216 14 L 204 58 L 190 44 Z"
+    fill="url(#dwLogoGrad)"
+    stroke="url(#dwLogoGrad)"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+</svg>

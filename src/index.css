@@ -107,15 +107,23 @@ body {
 }
 
 .logo-badge {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
-  color: #FFFFFF;
+  background: #FFFFFF;
+  border: 1px solid var(--border-beige);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(10, 25, 47, 0.2);
+  box-shadow: 0 2px 8px rgba(10, 25, 47, 0.08);
+  padding: 4px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brand-logo:hover .logo-badge {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 16px rgba(10, 25, 47, 0.14);
+  border-color: var(--water-cyan);
 }
 
 .brand-name {
