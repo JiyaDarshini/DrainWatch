@@ -249,49 +249,6 @@ export default function AuthModal({ onAuthSuccess }) {
               Next-generation municipal drainage monitoring, urban stormwater intelligence, and predictive blockage telemetry.
             </p>
           </div>
-
-          <div className="hero-features">
-            <div className="hero-feature-item">
-              <div className="feature-icon-box">
-                <Waves size={20} />
-              </div>
-              <div className="feature-texts">
-                <h4>IoT Sensor Telemetry</h4>
-                <p>Real-time water depth, velocity, and catchment basin pressure.</p>
-              </div>
-            </div>
-
-            <div className="hero-feature-item">
-              <div className="feature-icon-box" style={{ background: 'rgba(13, 148, 136, 0.2)', color: '#2DD4BF' }}>
-                <Activity size={20} />
-              </div>
-              <div className="feature-texts">
-                <h4>Flood Risk Early Warning</h4>
-                <p>Automated SMS dispatch and municipal alert protocols.</p>
-              </div>
-            </div>
-
-            <div className="hero-feature-item">
-              <div className="feature-icon-box" style={{ background: 'rgba(217, 119, 6, 0.2)', color: '#FBBF24' }}>
-                <Database size={20} />
-              </div>
-              <div className="feature-texts">
-                <h4>Neon PostgreSQL Resilience</h4>
-                <p>High-availability distributed cloud storage with zero data loss.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="hero-telemetry-badge">
-            <div className="telemetry-node-info">
-              <Radio size={16} color="#38BDF8" className="animate-pulse" />
-              <div>
-                <div className="node-title">CENTRAL WATERWAY SENSOR #04</div>
-                <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>Status: Operating Nominal (6.8 m³/s)</div>
-              </div>
-            </div>
-            <div className="node-val">42% Depth</div>
-          </div>
         </div>
 
         {/* Right Authentication Form */}

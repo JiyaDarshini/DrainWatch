@@ -218,7 +218,7 @@ body {
   padding: 3rem 2.75rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   position: relative;
   overflow: hidden;
 }
