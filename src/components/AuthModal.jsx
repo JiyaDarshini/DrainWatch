@@ -21,6 +21,7 @@ import {
 import OtpVerification from './OtpVerification';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import DrainWatchLogo from './DrainWatchLogo';
+import { safeJson } from '../utils/api';
 
 export default function AuthModal({ onAuthSuccess }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
@@ -29,7 +30,7 @@ export default function AuthModal({ onAuthSuccess }) {
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Register fields
   const [fullName, setFullName] = useState('');
@@ -113,10 +114,10 @@ export default function AuthModal({ onAuthSuccess }) {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
 
       if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(data.message || 'Login failed. Please verify credentials.');
       }
 
       setSuccessMsg(data.message || 'Login successful!');
@@ -176,7 +177,7 @@ export default function AuthModal({ onAuthSuccess }) {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
 
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Registration failed');
@@ -306,7 +307,7 @@ export default function AuthModal({ onAuthSuccess }) {
 
           {/* SIGN IN FORM */}
           {activeTab === 'login' ? (
-            <form onSubmit={handleLoginSubmit}>
+            <form onSubmit={handleLoginSubmit} autoComplete="off">
               <div className="form-group">
                 <label className="form-label">Email or Phone Number</label>
                 <div className="input-container">
@@ -316,9 +317,10 @@ export default function AuthModal({ onAuthSuccess }) {
                   <input
                     type="text"
                     className="input-field"
-                    placeholder="officer@city.gov or +1 (555) 019-2834"
+                    placeholder="Enter email or mobile number"
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
+                    autoComplete="off"
                     required
                   />
                 </div>
@@ -343,9 +345,10 @@ export default function AuthModal({ onAuthSuccess }) {
                   <input
                     type={showLoginPassword ? 'text' : 'password'}
                     className="input-field"
-                    placeholder="••••••••••••"
+                    placeholder="Enter your password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
+                    autoComplete="new-password"
                     required
                   />
                   <button
@@ -443,7 +446,7 @@ export default function AuthModal({ onAuthSuccess }) {
                     <input
                       type="tel"
                       className="input-field"
-                      placeholder="9876543210"
+                      placeholder="Enter 10-digit mobile number"
                       value={registerPhone}
                       onChange={(e) => setRegisterPhone(e.target.value)}
                       autoComplete="off"
@@ -586,10 +589,14 @@ export default function AuthModal({ onAuthSuccess }) {
       {showForgotPassword && (
         <ForgotPasswordModal
           onClose={() => setShowForgotPassword(false)}
-          onSuccess={() => {
+          onSuccess={(resetUser, resetToken) => {
             setShowForgotPassword(false);
-            setActiveTab('login');
-            setSuccessMsg('Password reset! Please log in with your updated password.');
+            if (resetUser && onAuthSuccess) {
+              onAuthSuccess(resetUser, resetToken);
+            } else {
+              setActiveTab('login');
+              setSuccessMsg('Password reset! Please log in with your updated password.');
+            }
           }}
         />
       )}

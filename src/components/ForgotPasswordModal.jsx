@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { KeyRound, Smartphone, Lock, AlertCircle, CheckCircle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { safeJson } from '../utils/api';
 
 export default function ForgotPasswordModal({ onClose, onSuccess }) {
   const [step, setStep] = useState(1); // 1 = Enter phone, 2 = Enter OTP and new password
@@ -28,7 +29,7 @@ export default function ForgotPasswordModal({ onClose, onSuccess }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to dispatch reset OTP');
       }
@@ -70,15 +71,18 @@ export default function ForgotPasswordModal({ onClose, onSuccess }) {
         body: JSON.stringify({ phone, otp, newPassword, confirmNewPassword }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to reset password');
       }
 
-      setSuccessMsg('Password reset successful! You can now log in.');
+      setSuccessMsg(data.message || 'Password reset successful! Opening Dashboard...');
+      if (data.token) {
+        localStorage.setItem('drainwatch_token', data.token);
+      }
       setTimeout(() => {
-        onSuccess();
-      }, 1500);
+        onSuccess(data.user, data.token);
+      }, 900);
     } catch (err) {
       setErrorMsg(err.message || 'Error updating password');
     } finally {
@@ -97,31 +101,61 @@ export default function ForgotPasswordModal({ onClose, onSuccess }) {
       justifyContent: 'center',
       zIndex: 100,
       padding: '1.5rem',
+      animation: 'fadeIn 0.2s ease-out'
     }}>
-      <div className="otp-card" style={{ width: '100%', maxWidth: '440px', position: 'relative' }}>
-        <div className="otp-icon-wrap">
-          <KeyRound size={28} />
+      <div style={{
+        background: '#FFFFFF',
+        borderRadius: 'var(--radius-lg)',
+        width: '100%',
+        maxWidth: '440px',
+        padding: '2rem',
+        boxShadow: '0 25px 50px -12px rgba(10, 25, 47, 0.35)',
+        border: '1px solid var(--border-beige)',
+        position: 'relative'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            background: 'var(--bg-secondary)',
+            color: 'var(--water-cyan)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid var(--border-beige)'
+          }}>
+            <KeyRound size={20} />
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-secondary-outline"
+            style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
+          >
+            Cancel
+          </button>
         </div>
 
-        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.45rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-          Reset Account Access
-        </h3>
-        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
-          {step === 1
-            ? 'Enter your registered mobile phone number to receive a verification code.'
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+          {step === 1 ? 'Reset Infrastructure Access' : 'Set New Password'}
+        </h2>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+          {step === 1 
+            ? 'Enter your registered phone number to receive a secure password reset OTP code.' 
             : `Enter the code sent to ${phone} and set your new password.`}
         </p>
 
         {errorMsg && (
-          <div className="alert-banner error">
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+          <div className="alert-banner error" style={{ marginBottom: '1rem' }}>
+            <AlertCircle size={16} />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="alert-banner success">
-            <CheckCircle size={16} style={{ flexShrink: 0 }} />
+          <div className="alert-banner success" style={{ marginBottom: '1rem' }}>
+            <CheckCircle size={16} />
             <span>{successMsg}</span>
           </div>
         )}

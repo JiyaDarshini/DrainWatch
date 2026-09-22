@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Smartphone, CheckCircle, RefreshCw, AlertCircle, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { safeJson } from '../utils/api';
 
 export default function OtpVerification({ phone, onVerified, onCancel, initialDevOtp }) {
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
@@ -51,12 +52,18 @@ export default function OtpVerification({ phone, onVerified, onCancel, initialDe
   const handlePaste = (e) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').trim();
-    if (/^\d{6}$/.test(pastedData)) {
-      const digits = pastedData.split('');
-      setOtpValues(digits);
-      if (inputRefs.current[5]) {
-        inputRefs.current[5].focus();
-      }
+    if (!/^\d+$/.test(pastedData)) return;
+
+    const digits = pastedData.slice(0, 6).split('');
+    const newValues = [...otpValues];
+    digits.forEach((digit, idx) => {
+      if (idx < 6) newValues[idx] = digit;
+    });
+    setOtpValues(newValues);
+
+    const nextIndex = Math.min(digits.length, 5);
+    if (inputRefs.current[nextIndex]) {
+      inputRefs.current[nextIndex].focus();
     }
   };
 
@@ -67,16 +74,16 @@ export default function OtpVerification({ phone, onVerified, onCancel, initialDe
   };
 
   const handleVerify = async (e) => {
-    if (e) e.preventDefault();
+    e.preventDefault();
     const enteredOtp = otpValues.join('');
-
-    if (enteredOtp.length !== 6) {
-      setErrorMsg('Please enter all 6 digits of the OTP code.');
+    if (enteredOtp.length < 6) {
+      setErrorMsg('Please enter the complete 6-digit code');
       return;
     }
 
     setLoading(true);
     setErrorMsg('');
+    setSuccessMsg('');
 
     try {
       const res = await fetch('/api/auth/verify-otp', {
@@ -85,7 +92,7 @@ export default function OtpVerification({ phone, onVerified, onCancel, initialDe
         body: JSON.stringify({ phone, otp: enteredOtp }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
 
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'OTP verification failed');
@@ -114,7 +121,7 @@ export default function OtpVerification({ phone, onVerified, onCancel, initialDe
         body: JSON.stringify({ phone }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to resend OTP');
       }

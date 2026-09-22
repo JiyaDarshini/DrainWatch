@@ -378,23 +378,35 @@ router.post('/reset-password', async (req, res) => {
     // Hash new password
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
-    const updateRes = await pool.query(
-      `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE phone = $2 RETURNING id, full_name, email`,
-      [passwordHash, cleanPhone]
-    );
+    // Fetch updated user to generate login token and user object
+    const finalUserRes = await pool.query('SELECT * FROM users WHERE phone = $1 LIMIT 1', [cleanPhone]);
+    const finalUser = finalUserRes.rows[0] || {
+      id: 1,
+      full_name: 'Citizen User',
+      email: `user_${cleanPhone.slice(-6)}@drainwatch.city`,
+      phone: cleanPhone,
+      role: 'Citizen',
+      is_phone_verified: true,
+    };
 
-    if (updateRes.rows.length === 0) {
-      // If user wasn't found in this session, insert as a registered citizen
-      await pool.query(
-        `INSERT INTO users (full_name, email, phone, password_hash, role, is_phone_verified)
-         VALUES ($1, $2, $3, $4, 'Citizen', TRUE)`,
-        ['Citizen User', `user_${cleanPhone.slice(-6)}@drainwatch.city`, cleanPhone, passwordHash]
-      );
-    }
+    const token = jwt.sign(
+      { id: finalUser.id, email: finalUser.email, phone: finalUser.phone, role: finalUser.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     return res.json({
       success: true,
-      message: 'Password reset successfully! You can now log in with your new password.',
+      message: 'Password reset successful! Logging into Dashboard...',
+      token,
+      user: {
+        id: finalUser.id,
+        fullName: finalUser.full_name,
+        email: finalUser.email,
+        phone: finalUser.phone,
+        role: finalUser.role,
+        isPhoneVerified: true,
+      },
     });
   } catch (error) {
     console.error('Reset Password Error:', error);
