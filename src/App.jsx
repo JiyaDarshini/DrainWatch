@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Waves, Shield, Database, Radio, CheckCircle, Smartphone } from 'lucide-react';
 import AuthModal from './components/AuthModal';
 import Dashboard from './components/Dashboard';
-
 import DrainWatchLogo from './components/DrainWatchLogo';
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('drainwatch_token') || null);
-  const [dbStatus, setDbStatus] = useState({ connected: false, checking: true });
 
   // Verify stored session token on initial mount
   useEffect(() => {
@@ -33,24 +30,6 @@ export default function App() {
     }
     checkSession();
   }, [token]);
-
-  // Check Neon DB Health
-  useEffect(() => {
-    async function checkDbHealth() {
-      try {
-        const res = await fetch('/api/system/health');
-        if (res.ok) {
-          const data = await res.json();
-          setDbStatus({ connected: data.dbConnected, checking: false });
-        } else {
-          setDbStatus({ connected: false, checking: false });
-        }
-      } catch (err) {
-        setDbStatus({ connected: false, checking: false });
-      }
-    }
-    checkDbHealth();
-  }, []);
 
   const handleAuthSuccess = (userData, userToken) => {
     setUser(userData);
@@ -78,13 +57,6 @@ export default function App() {
             Drain<span>Watch</span>
           </div>
           <span className="brand-badge">Smart Social Infrastructure</span>
-        </div>
-
-        <div className="nav-status">
-          <div className="db-pill">
-            <span className={`pulse-dot ${dbStatus.connected ? '' : 'offline'}`} style={{ backgroundColor: dbStatus.connected ? '#10B981' : '#F59E0B' }}></span>
-            <span>{dbStatus.connected ? 'Neon Cloud Connected' : 'Telemetry Grid Ready'}</span>
-          </div>
         </div>
       </header>
 
