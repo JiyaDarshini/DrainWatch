@@ -222,7 +222,7 @@ let isNeonConnected = false;
 // Safe In-Memory Query Engine Fallback
 function executeMemoryQuery(text, params = []) {
   const sql = text.trim();
-  const lower = sql.toLowerCase();
+  const lower = sql.toLowerCase().replace(/\s+/g, ' ');
 
   // 1. SELECT NOW(), COUNT(*) FROM users
   if (lower.includes('from users') && lower.includes('count(*)')) {
@@ -233,7 +233,7 @@ function executeMemoryQuery(text, params = []) {
   }
 
   // 2. User lookup by identifier (email or phone)
-  if (lower.startsWith('select') && lower.includes('from users') && (lower.includes('lower(email)') || lower.includes('phone'))) {
+  if (lower.startsWith('select') && lower.includes('from users') && (lower.includes('email') || lower.includes('phone'))) {
     const p1 = (params[0] || '').toString().toLowerCase().trim();
     const p2 = params[1] ? params[1].toString().toLowerCase().trim() : p1;
     const match = memoryDb.users.filter(u => 
@@ -246,16 +246,9 @@ function executeMemoryQuery(text, params = []) {
   }
 
   // 4. User lookup by ID
-  if (lower.startsWith('select') && lower.includes('from users where id = $1')) {
+  if (lower.startsWith('select') && lower.includes('from users') && lower.includes('id = $1')) {
     const id = parseInt(params[0], 10);
     const match = memoryDb.users.filter(u => u.id === id);
-    return { rows: match, rowCount: match.length };
-  }
-
-  // 5. User lookup by Phone
-  if (lower.startsWith('select') && lower.includes('from users where phone = $1')) {
-    const phone = params[0];
-    const match = memoryDb.users.filter(u => u.phone === phone);
     return { rows: match, rowCount: match.length };
   }
 
@@ -280,16 +273,23 @@ function executeMemoryQuery(text, params = []) {
 
   // 7. UPDATE users (phone verification or password reset)
   if (lower.startsWith('update users')) {
-    if (lower.includes('is_phone_verified = true')) {
-      const phone = params[0];
-      const user = memoryDb.users.find(u => u.phone === phone);
-      if (user) user.is_phone_verified = true;
+    if (lower.includes('is_phone_verified')) {
+      const cleanPhone = (params[0] || '').toString().trim().replace(/\s+/g, '');
+      const user = memoryDb.users.find(u => u.phone.replace(/\s+/g, '') === cleanPhone);
+      if (user) {
+        user.is_phone_verified = true;
+        user.updated_at = new Date();
+      }
       return { rows: user ? [user] : [], rowCount: user ? 1 : 0 };
     }
     if (lower.includes('password_hash = $1')) {
       const [newHash, phone] = params;
-      const user = memoryDb.users.find(u => u.phone === phone);
-      if (user) user.password_hash = newHash;
+      const cleanPhone = (phone || '').toString().trim().replace(/\s+/g, '');
+      const user = memoryDb.users.find(u => u.phone.replace(/\s+/g, '') === cleanPhone);
+      if (user) {
+        user.password_hash = newHash;
+        user.updated_at = new Date();
+      }
       return { rows: user ? [user] : [], rowCount: user ? 1 : 0 };
     }
   }
@@ -299,8 +299,8 @@ function executeMemoryQuery(text, params = []) {
     const [phone, otp_code, expires_at] = params;
     const newOtp = {
       id: memoryDb.otp_codes.length + 1,
-      phone,
-      otp_code,
+      phone: (phone || '').toString().trim().replace(/\s+/g, ''),
+      otp_code: (otp_code || '').toString().trim(),
       expires_at: new Date(expires_at),
       is_used: false,
       created_at: new Date(),
@@ -309,12 +309,17 @@ function executeMemoryQuery(text, params = []) {
     return { rows: [newOtp], rowCount: 1 };
   }
 
-  if (lower.startsWith('select') && lower.includes('from otp_codes where phone = $1 and otp_code = $2')) {
-    const [phone, otp_code] = params;
+  if (lower.startsWith('select') && lower.includes('from otp_codes') && lower.includes('otp_code')) {
+    const cleanPhone = (params[0] || '').toString().trim().replace(/\s+/g, '');
+    const cleanOtp = (params[1] || '').toString().trim();
     const now = new Date();
     const match = memoryDb.otp_codes.filter(
-      o => o.phone === phone && o.otp_code === otp_code && !o.is_used && new Date(o.expires_at) > now
+      o => o.phone.replace(/\s+/g, '') === cleanPhone &&
+           o.otp_code === cleanOtp &&
+           !o.is_used &&
+           new Date(o.expires_at) > now
     );
+    match.sort((a, b) => b.id - a.id);
     return { rows: match, rowCount: match.length };
   }
 
@@ -324,9 +329,9 @@ function executeMemoryQuery(text, params = []) {
       const otp = memoryDb.otp_codes.find(o => o.id === id);
       if (otp) otp.is_used = true;
     } else {
-      const phone = params[0];
+      const cleanPhone = (params[0] || '').toString().trim().replace(/\s+/g, '');
       memoryDb.otp_codes.forEach(o => {
-        if (o.phone === phone) o.is_used = true;
+        if (o.phone.replace(/\s+/g, '') === cleanPhone) o.is_used = true;
       });
     }
     return { rows: [], rowCount: 1 };
