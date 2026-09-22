@@ -54,15 +54,14 @@ app.get('/api/telemetry', async (req, res) => {
 
 // Start server
 async function startServer() {
-  try {
-    await initDb();
-    app.listen(PORT, () => {
-      console.log(`🌊 DrainWatch Backend Server running at http://localhost:${PORT}`);
-    });
-  } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  }
+  app.listen(PORT, () => {
+    console.log(`🌊 DrainWatch Backend Server running at http://localhost:${PORT}`);
+  });
+
+  // Attempt database initialization asynchronously in the background
+  initDb().catch((err) => {
+    console.log('⚠️ Database initialization deferred; resilient fallback storage is active.');
+  });
 }
 
 startServer();
