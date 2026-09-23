@@ -38,6 +38,8 @@ export const memoryDb = {
       zone_criticality: 'Critical Health Zone',
       reported_by: 'Dr. Alistair Vance',
       contact_phone: '9876543210',
+      user_id: 101,
+      user_email: 'alistair@cityhospital.org',
       water_level_pct: 95,
       risk_score: 96,
       status: 'Critical Dispatch',
@@ -57,6 +59,8 @@ export const memoryDb = {
       zone_criticality: 'Dense Commercial',
       reported_by: 'Insp. Sarah Connor',
       contact_phone: '9812345678',
+      user_id: 102,
+      user_email: 'sarah@drainwatch.gov',
       water_level_pct: 88,
       risk_score: 87,
       status: 'Critical Dispatch',
@@ -76,6 +80,8 @@ export const memoryDb = {
       zone_criticality: 'High Traffic Transit',
       reported_by: 'Eng. Rajiv Nair',
       contact_phone: '9876123450',
+      user_id: 103,
+      user_email: 'rajiv@metrotransit.org',
       water_level_pct: 78,
       risk_score: 79,
       status: 'In Progress',
@@ -95,6 +101,8 @@ export const memoryDb = {
       zone_criticality: 'Dense Commercial',
       reported_by: 'Citizen Priya Sharma',
       contact_phone: '9822334455',
+      user_id: 104,
+      user_email: 'priya.sharma@example.com',
       water_level_pct: 68,
       risk_score: 68,
       status: 'In Progress',
@@ -114,6 +122,8 @@ export const memoryDb = {
       zone_criticality: 'School Safety Zone',
       reported_by: 'Principal Elena Rostova',
       contact_phone: '9833445566',
+      user_id: 105,
+      user_email: 'elena@oakridgeschool.edu',
       water_level_pct: 45,
       risk_score: 62,
       status: 'Under Review',
@@ -133,6 +143,8 @@ export const memoryDb = {
       zone_criticality: 'Residential',
       reported_by: 'Resident Arthur Pendelton',
       contact_phone: '9844556677',
+      user_id: 106,
+      user_email: 'arthur@greenvalley.org',
       water_level_pct: 52,
       risk_score: 48,
       status: 'Pending Inspection',
@@ -152,6 +164,8 @@ export const memoryDb = {
       zone_criticality: 'Public Park',
       reported_by: 'Ranger Thomas Bell',
       contact_phone: '9855667788',
+      user_id: 107,
+      user_email: 'thomas@civicparks.org',
       water_level_pct: 25,
       risk_score: 28,
       status: 'Resolved',
@@ -232,8 +246,26 @@ function executeMemoryQuery(text, params = []) {
     };
   }
 
-  // 2. User lookup by identifier (email or phone)
-  if (lower.startsWith('select') && lower.includes('from users') && (lower.includes('email') || lower.includes('phone'))) {
+  // 2. User lookup by ID (e.g. /api/auth/me) -> MUST CHECK BEFORE generic email/phone check!
+  if (lower.includes('from users') && (lower.includes('where id =') || lower.includes('where id=$'))) {
+    const id = parseInt(params[0], 10);
+    const match = memoryDb.users.filter(u => u.id === id);
+    return { 
+      rows: match.map(u => ({
+        id: u.id,
+        full_name: u.full_name,
+        email: u.email,
+        phone: u.phone,
+        role: u.role,
+        is_phone_verified: u.is_phone_verified,
+        created_at: u.created_at || new Date()
+      })), 
+      rowCount: match.length 
+    };
+  }
+
+  // 3. User lookup by identifier (email or phone)
+  if (lower.includes('from users') && (lower.includes('where lower(email)') || lower.includes('where email') || lower.includes('where phone'))) {
     const p1 = (params[0] || '').toString().toLowerCase().trim();
     const p2 = params[1] ? params[1].toString().toLowerCase().trim() : p1;
     const match = memoryDb.users.filter(u => 
@@ -242,17 +274,13 @@ function executeMemoryQuery(text, params = []) {
       u.email.toLowerCase() === p2 || 
       u.phone === p2
     );
-    return { rows: match, rowCount: match.length };
+    return { 
+      rows: match.map(u => ({ ...u })), 
+      rowCount: match.length 
+    };
   }
 
-  // 4. User lookup by ID
-  if (lower.startsWith('select') && lower.includes('from users') && lower.includes('id = $1')) {
-    const id = parseInt(params[0], 10);
-    const match = memoryDb.users.filter(u => u.id === id);
-    return { rows: match, rowCount: match.length };
-  }
-
-  // 6. INSERT into users
+  // 4. INSERT into users
   if (lower.startsWith('insert into users')) {
     const [full_name, email, phone, password_hash, role, is_phone_verified] = params;
     const newId = memoryDb.users.length > 0 ? Math.max(...memoryDb.users.map(u => u.id)) + 1 : 1;
@@ -268,21 +296,42 @@ function executeMemoryQuery(text, params = []) {
       updated_at: new Date(),
     };
     memoryDb.users.push(newUser);
-    return { rows: [newUser], rowCount: 1 };
+    return { 
+      rows: [{
+        id: newUser.id,
+        full_name: newUser.full_name,
+        email: newUser.email,
+        phone: newUser.phone,
+        role: newUser.role,
+        is_phone_verified: newUser.is_phone_verified,
+        created_at: newUser.created_at
+      }], 
+      rowCount: 1 
+    };
   }
 
-  // 7. UPDATE users (phone verification or password reset)
+  // 5. UPDATE users (phone verification or password reset)
   if (lower.startsWith('update users')) {
     if (lower.includes('is_phone_verified')) {
-      const cleanPhone = (params[0] || '').toString().trim().replace(/\s+/g, '');
-      const user = memoryDb.users.find(u => u.phone.replace(/\s+/g, '') === cleanPhone);
-      if (user) {
-        user.is_phone_verified = true;
-        user.updated_at = new Date();
+      if (lower.includes('where id =')) {
+        const id = parseInt(params[0], 10);
+        const user = memoryDb.users.find(u => u.id === id);
+        if (user) {
+          user.is_phone_verified = true;
+          user.updated_at = new Date();
+        }
+        return { rows: user ? [{ ...user }] : [], rowCount: user ? 1 : 0 };
+      } else {
+        const cleanPhone = (params[0] || '').toString().trim().replace(/\s+/g, '');
+        const user = memoryDb.users.find(u => u.phone.replace(/\s+/g, '') === cleanPhone);
+        if (user) {
+          user.is_phone_verified = true;
+          user.updated_at = new Date();
+        }
+        return { rows: user ? [{ ...user }] : [], rowCount: user ? 1 : 0 };
       }
-      return { rows: user ? [user] : [], rowCount: user ? 1 : 0 };
     }
-    if (lower.includes('password_hash = $1')) {
+    if (lower.includes('password_hash = $1') || lower.includes('password_hash =')) {
       const [newHash, phone] = params;
       const cleanPhone = (phone || '').toString().trim().replace(/\s+/g, '');
       const user = memoryDb.users.find(u => u.phone.replace(/\s+/g, '') === cleanPhone);
@@ -290,11 +339,11 @@ function executeMemoryQuery(text, params = []) {
         user.password_hash = newHash;
         user.updated_at = new Date();
       }
-      return { rows: user ? [user] : [], rowCount: user ? 1 : 0 };
+      return { rows: user ? [{ ...user }] : [], rowCount: user ? 1 : 0 };
     }
   }
 
-  // 8. OTP Operations
+  // 6. OTP Operations
   if (lower.startsWith('insert into otp_codes')) {
     const [phone, otp_code, expires_at] = params;
     const newOtp = {
@@ -309,7 +358,7 @@ function executeMemoryQuery(text, params = []) {
     return { rows: [newOtp], rowCount: 1 };
   }
 
-  if (lower.startsWith('select') && lower.includes('from otp_codes') && lower.includes('otp_code')) {
+  if (lower.startsWith('select') && lower.includes('from otp_codes')) {
     const cleanPhone = (params[0] || '').toString().trim().replace(/\s+/g, '');
     const cleanOtp = (params[1] || '').toString().trim();
     const now = new Date();
@@ -337,89 +386,219 @@ function executeMemoryQuery(text, params = []) {
     return { rows: [], rowCount: 1 };
   }
 
-  // 9. Drainage Alerts
+  // 7. Drainage Alerts
   if (lower.startsWith('select') && lower.includes('from drainage_alerts')) {
     return { rows: [...memoryDb.drainage_alerts], rowCount: memoryDb.drainage_alerts.length };
   }
 
-  // 10. Complaints
-  if (lower.startsWith('select count(*) as total, avg(risk_score) as avg_risk from complaints')) {
+  // 8. Complaints Analytics Queries
+  if (lower.includes('from complaints') && lower.includes('avg(risk_score)')) {
     const total = memoryDb.complaints.length;
     const avgRisk = total > 0 ? memoryDb.complaints.reduce((acc, c) => acc + c.risk_score, 0) / total : 0;
     return { rows: [{ total: total.toString(), avg_risk: avgRisk.toFixed(2) }], rowCount: 1 };
   }
 
-  if (lower.includes('count(*)') && lower.includes('as critical_count') && lower.includes('from complaints')) {
+  if (lower.includes('from complaints') && (lower.includes('critical_count') || lower.includes('case when risk_score'))) {
     const critical = memoryDb.complaints.filter(c => c.risk_score >= 80).length;
     const high = memoryDb.complaints.filter(c => c.risk_score >= 60 && c.risk_score < 80).length;
     const moderate = memoryDb.complaints.filter(c => c.risk_score >= 40 && c.risk_score < 60).length;
     const low = memoryDb.complaints.filter(c => c.risk_score < 40).length;
-    return { rows: [{ critical_count: critical, high_count: high, moderate_count: moderate, low_count: low }], rowCount: 1 };
+    const resolved = memoryDb.complaints.filter(c => c.status === 'Resolved').length;
+    const activeDispatches = memoryDb.complaints.filter(c => c.status === 'Critical Dispatch').length;
+    return { 
+      rows: [{ 
+        critical_count: critical, 
+        high_count: high, 
+        medium_count: moderate, 
+        low_count: low,
+        resolved_count: resolved,
+        active_dispatches: activeDispatches
+      }], 
+      rowCount: 1 
+    };
   }
 
-  if (lower.includes('zone_criticality, count(*)') && lower.includes('group by zone_criticality')) {
-    const counts = {};
+  if (lower.includes('from complaints') && lower.includes('group by zone_criticality')) {
+    const zoneMap = {};
     memoryDb.complaints.forEach(c => {
-      counts[c.zone_criticality] = (counts[c.zone_criticality] || 0) + 1;
+      const z = c.zone_criticality || 'Residential';
+      if (!zoneMap[z]) zoneMap[z] = { count: 0, totalRisk: 0 };
+      zoneMap[z].count += 1;
+      zoneMap[z].totalRisk += (c.risk_score || 50);
     });
-    const rows = Object.entries(counts).map(([zone_criticality, count]) => ({ zone_criticality, count: count.toString() }));
+    const rows = Object.entries(zoneMap).map(([zone, data]) => ({ 
+      zone, 
+      zone_criticality: zone,
+      count: data.count.toString(),
+      avg_risk: Math.round(data.totalRisk / data.count)
+    }));
     return { rows, rowCount: rows.length };
   }
 
-  if (lower.includes('category, count(*)') && lower.includes('group by category')) {
-    const counts = {};
+  if (lower.includes('from complaints') && lower.includes('group by category')) {
+    const catMap = {};
     memoryDb.complaints.forEach(c => {
-      counts[c.category] = (counts[c.category] || 0) + 1;
+      const cat = c.category || 'Severe Blockage';
+      if (!catMap[cat]) catMap[cat] = { count: 0, totalRisk: 0 };
+      catMap[cat].count += 1;
+      catMap[cat].totalRisk += (c.risk_score || 50);
     });
-    const rows = Object.entries(counts).map(([category, count]) => ({ category, count: count.toString() }));
+    const rows = Object.entries(catMap).map(([category, data]) => ({ 
+      category, 
+      count: data.count.toString(),
+      avg_risk: Math.round(data.totalRisk / data.count)
+    }));
     return { rows, rowCount: rows.length };
   }
 
+  // 9. Complaints General SELECT (with filters & sorting)
   if (lower.startsWith('select') && lower.includes('from complaints')) {
-    let list = [...memoryDb.complaints];
-    if (params.length > 0 && typeof params[0] === 'string' && params[0] !== 'all' && !params[0].startsWith('%')) {
-      const searchOrStatus = params[0];
-      list = list.filter(c => c.status.toLowerCase() === searchOrStatus.toLowerCase() || c.category.toLowerCase() === searchOrStatus.toLowerCase());
+    if (lower.includes('1=0')) {
+      return { rows: [], rowCount: 0 };
     }
-    // sort by risk_score desc
-    list.sort((a, b) => b.risk_score - a.risk_score);
+
+    let list = [...memoryDb.complaints];
+    
+    // Status filter
+    if (lower.includes('status =')) {
+      const match = lower.match(/status\s*=\s*\$(\d+)/);
+      if (match && params[parseInt(match[1], 10) - 1]) {
+        const sVal = String(params[parseInt(match[1], 10) - 1]).toLowerCase();
+        list = list.filter(c => c.status && c.status.toLowerCase() === sVal);
+      }
+    }
+
+    // Category filter
+    if (lower.includes('category =')) {
+      const match = lower.match(/category\s*=\s*\$(\d+)/);
+      if (match && params[parseInt(match[1], 10) - 1]) {
+        const cVal = String(params[parseInt(match[1], 10) - 1]).toLowerCase();
+        list = list.filter(c => c.category && c.category.toLowerCase() === cVal);
+      }
+    }
+
+    // Zone filter
+    if (lower.includes('zone_criticality =')) {
+      const match = lower.match(/zone_criticality\s*=\s*\$(\d+)/);
+      if (match && params[parseInt(match[1], 10) - 1]) {
+        const zVal = String(params[parseInt(match[1], 10) - 1]).toLowerCase();
+        list = list.filter(c => c.zone_criticality && c.zone_criticality.toLowerCase() === zVal);
+      }
+    }
+
+    // User ownership filter (user_id, user_email, contact_phone, reported_by)
+    const hasUserClause = lower.includes('user_id') || lower.includes('user_email') || lower.includes('contact_phone') || lower.includes('reported_by');
+    if (hasUserClause) {
+      let targetUserId = null;
+      let targetEmail = null;
+      let targetPhone = null;
+      let targetReportedBy = null;
+
+      const uidMatch = lower.match(/user_id\s*=\s*\$(\d+)/);
+      if (uidMatch && params[parseInt(uidMatch[1], 10) - 1] !== undefined) {
+        targetUserId = parseInt(params[parseInt(uidMatch[1], 10) - 1], 10);
+      }
+
+      const emailMatch = lower.match(/user_email\)?\s*=\s*lower\(\$(\d+)\)/) || lower.match(/user_email\s*=\s*\$(\d+)/);
+      if (emailMatch && params[parseInt(emailMatch[1], 10) - 1]) {
+        targetEmail = String(params[parseInt(emailMatch[1], 10) - 1]).toLowerCase().trim();
+      }
+
+      const phoneMatch = lower.match(/contact_phone\s*=\s*\$(\d+)/);
+      if (phoneMatch && params[parseInt(phoneMatch[1], 10) - 1]) {
+        targetPhone = String(params[parseInt(phoneMatch[1], 10) - 1]).trim();
+      }
+
+      const repMatch = lower.match(/reported_by\)?\s*=\s*lower\(\$(\d+)\)/) || lower.match(/reported_by\s*=\s*\$(\d+)/);
+      if (repMatch && params[parseInt(repMatch[1], 10) - 1]) {
+        targetReportedBy = String(params[parseInt(repMatch[1], 10) - 1]).toLowerCase().trim();
+      }
+
+      list = list.filter(c => {
+        const matchId = targetUserId != null && c.user_id != null && c.user_id === targetUserId;
+        const matchEmail = targetEmail && c.user_email && c.user_email.toLowerCase() === targetEmail;
+        const matchPhone = targetPhone && c.contact_phone && c.contact_phone === targetPhone;
+        const matchRep = targetReportedBy && c.reported_by && c.reported_by.toLowerCase() === targetReportedBy;
+        return Boolean(matchId || matchEmail || matchPhone || matchRep);
+      });
+    }
+
+    // Determine sort
+    if (lower.includes('order by water_level_pct')) {
+      const isAsc = lower.includes('water_level_pct asc');
+      list.sort((a, b) => isAsc ? a.water_level_pct - b.water_level_pct : b.water_level_pct - a.water_level_pct);
+    } else if (lower.includes('order by created_at')) {
+      const isAsc = lower.includes('created_at asc');
+      list.sort((a, b) => isAsc ? new Date(a.created_at) - new Date(b.created_at) : new Date(b.created_at) - new Date(a.created_at));
+    } else if (lower.includes('order by sla_hours_remaining')) {
+      const isAsc = lower.includes('sla_hours_remaining asc');
+      list.sort((a, b) => isAsc ? a.sla_hours_remaining - b.sla_hours_remaining : b.sla_hours_remaining - a.sla_hours_remaining);
+    } else {
+      // Default: risk_score DESC
+      const isAsc = lower.includes('risk_score asc');
+      list.sort((a, b) => isAsc ? a.risk_score - b.risk_score : b.risk_score - a.risk_score);
+    }
+
     return { rows: list, rowCount: list.length };
   }
 
+  // 10. INSERT into complaints
   if (lower.startsWith('insert into complaints')) {
-    const [complaint_id, title, category, location, zone_criticality, reported_by, contact_phone, water_level_pct, risk_score, status, sla_hours_remaining, description, photo_url, latitude, longitude] = params;
-    const newId = memoryDb.complaints.length + 1;
+    const [
+      complaint_id, 
+      title, 
+      category, 
+      location, 
+      zone_criticality, 
+      reported_by, 
+      contact_phone, 
+      water_level_pct, 
+      risk_score, 
+      status, 
+      sla_hours_remaining, 
+      description, 
+      photo_url, 
+      latitude, 
+      longitude,
+      user_id,
+      user_email
+    ] = params;
+
+    const newId = memoryDb.complaints.length > 0 ? Math.max(...memoryDb.complaints.map(c => c.id)) + 1 : 1;
     const newComplaint = {
       id: newId,
-      complaint_id,
-      title,
-      category,
-      location,
-      zone_criticality,
-      reported_by,
-      contact_phone,
-      water_level_pct: parseInt(water_level_pct, 10),
-      risk_score: parseInt(risk_score, 10),
+      complaint_id: complaint_id || `DW-CMP-${Math.floor(1000 + Math.random() * 9000)}`,
+      title: title || 'Drainage Incident Report',
+      category: category || 'Severe Blockage',
+      location: location || 'Civic Drainage Sector',
+      zone_criticality: zone_criticality || 'Residential',
+      reported_by: reported_by || 'Citizen Reporter',
+      contact_phone: contact_phone || '',
+      water_level_pct: parseInt(water_level_pct, 10) || 50,
+      risk_score: parseInt(risk_score, 10) || 60,
       status: status || 'Pending Inspection',
-      sla_hours_remaining: parseInt(sla_hours_remaining, 10),
-      description,
-      photo_url,
+      sla_hours_remaining: parseInt(sla_hours_remaining, 10) || 24,
+      description: description || '',
+      photo_url: photo_url || null,
       latitude: latitude ? parseFloat(latitude) : null,
       longitude: longitude ? parseFloat(longitude) : null,
+      user_id: user_id ? parseInt(user_id, 10) : null,
+      user_email: user_email || '',
       created_at: new Date(),
     };
     memoryDb.complaints.unshift(newComplaint);
     return { rows: [newComplaint], rowCount: 1 };
   }
 
-  if (lower.startsWith('update complaints set status = $1')) {
-    const [status, sla_hours_remaining, id] = params;
-    const comp = memoryDb.complaints.find(c => c.id === parseInt(id, 10));
+  // 11. UPDATE complaints (e.g. status)
+  if (lower.startsWith('update complaints')) {
+    const [status, id] = params;
+    const comp = memoryDb.complaints.find(c => c.id === parseInt(id, 10) || c.complaint_id === id);
     if (comp) {
       comp.status = status;
-      if (sla_hours_remaining !== undefined) comp.sla_hours_remaining = sla_hours_remaining;
+      if (status === 'Resolved') comp.sla_hours_remaining = 0;
     }
-    return { rows: comp ? [comp] : [], rowCount: comp ? 1 : 0 };
+    return { rows: comp ? [{ ...comp }] : [], rowCount: comp ? 1 : 0 };
   }
 
   return { rows: [], rowCount: 0 };
@@ -511,12 +690,16 @@ export async function initDb() {
         photo_url TEXT,
         latitude NUMERIC(10, 7),
         longitude NUMERIC(10, 7),
+        user_id INTEGER,
+        user_email VARCHAR(255),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS photo_url TEXT;
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS latitude NUMERIC(10, 7);
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS longitude NUMERIC(10, 7);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS user_id INTEGER;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS user_email VARCHAR(255);
     `);
 
     // Seed mock telemetry if empty

@@ -1,7 +1,9 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { pool } from './db.js';
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'drainwatch_secret_jwt_key_2025';
 
 // Risk Calculation Algorithm
 function calculateRiskScore({ category, zoneCriticality, waterLevelPct }) {
@@ -36,11 +38,23 @@ function calculateRiskScore({ category, zoneCriticality, waterLevelPct }) {
 
 /**
  * GET /api/complaints
- * Returns complaints ranked by risk_score DESC by default
+ * Returns complaints ranked by risk_score DESC by default.
+ * Supports filtering by user (userId, userEmail, phone, reportedBy, onlyMine) so users only see their own complaints.
  */
 router.get('/', async (req, res) => {
   try {
-    const { status, category, zone, sortBy = 'risk_score', order = 'DESC' } = req.query;
+    const { status, category, zone, sortBy = 'risk_score', order = 'DESC', userId, userEmail, phone, reportedBy, onlyMine } = req.query;
+
+    let tokenUser = null;
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        tokenUser = jwt.verify(token, JWT_SECRET);
+      } catch (e) {
+        // Token invalid or expired, continue with query parameters
+      }
+    }
 
     let query = 'SELECT * FROM complaints WHERE 1=1';
     const params = [];
@@ -59,6 +73,41 @@ router.get('/', async (req, res) => {
     if (zone && zone !== 'All') {
       query += ` AND zone_criticality = $${paramIndex++}`;
       params.push(zone);
+    }
+
+    // User-specific filtering (for citizen view / my complaints only)
+    const filterUserId = userId ? parseInt(userId, 10) : (tokenUser && onlyMine === 'true' ? tokenUser.id : null);
+    const filterEmail = userEmail ? userEmail.trim().toLowerCase() : (tokenUser && onlyMine === 'true' ? tokenUser.email.toLowerCase() : null);
+    const filterPhone = phone ? phone.trim() : (tokenUser && onlyMine === 'true' ? tokenUser.phone : null);
+    const filterReportedBy = reportedBy ? reportedBy.trim() : null;
+
+    const isUserFilterRequested = filterUserId || filterEmail || filterPhone || filterReportedBy || onlyMine === 'true';
+
+    if (isUserFilterRequested) {
+      const userConditions = [];
+      if (filterUserId) {
+        userConditions.push(`user_id = $${paramIndex++}`);
+        params.push(filterUserId);
+      }
+      if (filterEmail) {
+        userConditions.push(`LOWER(user_email) = LOWER($${paramIndex++})`);
+        params.push(filterEmail);
+      }
+      if (filterPhone) {
+        userConditions.push(`contact_phone = $${paramIndex++}`);
+        params.push(filterPhone);
+      }
+      if (filterReportedBy) {
+        userConditions.push(`LOWER(reported_by) = LOWER($${paramIndex++})`);
+        params.push(filterReportedBy);
+      }
+
+      if (userConditions.length > 0) {
+        query += ` AND (${userConditions.join(' OR ')})`;
+      } else if (onlyMine === 'true' && !tokenUser) {
+        // Requested onlyMine but no user identifiers provided: return empty
+        query += ` AND 1=0`;
+      }
     }
 
     // Sorting
@@ -135,10 +184,21 @@ router.get('/analytics', async (req, res) => {
 
 /**
  * POST /api/complaints
- * Submit a new complaint with automated risk scoring (supports Photo, GPS Location, Description)
+ * Submit a new complaint with automated risk scoring (supports Photo, GPS Location, Description, User Identity)
  */
 router.post('/', async (req, res) => {
   try {
+    let tokenUser = null;
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        tokenUser = jwt.verify(token, JWT_SECRET);
+      } catch (e) {
+        // Token invalid or expired
+      }
+    }
+
     const { 
       title, 
       category = 'Severe Blockage', 
@@ -150,7 +210,9 @@ router.post('/', async (req, res) => {
       description,
       photoUrl,
       latitude,
-      longitude 
+      longitude,
+      userId,
+      userEmail,
     } = req.body;
 
     if (!location && !latitude && !longitude) {
@@ -168,6 +230,11 @@ router.post('/', async (req, res) => {
     const waterPct = parseInt(waterLevelPct, 10) || 55;
     const riskScore = calculateRiskScore({ category, zoneCriticality: zone, waterLevelPct: waterPct });
 
+    const effectiveUserId = userId || (tokenUser ? tokenUser.id : null);
+    const effectiveUserEmail = (userEmail && userEmail.trim().toLowerCase()) || (tokenUser ? tokenUser.email.toLowerCase() : '');
+    const effectiveReportedBy = reportedBy || (tokenUser ? tokenUser.fullName : 'Citizen Reporter');
+    const effectivePhone = contactPhone || (tokenUser ? tokenUser.phone : '');
+
     let initialStatus = 'Pending Inspection';
     let slaHours = 24;
     if (riskScore >= 80) {
@@ -180,8 +247,8 @@ router.post('/', async (req, res) => {
 
     const insertRes = await pool.query(
       `INSERT INTO complaints 
-        (complaint_id, title, category, location, zone_criticality, reported_by, contact_phone, water_level_pct, risk_score, status, sla_hours_remaining, description, photo_url, latitude, longitude)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        (complaint_id, title, category, location, zone_criticality, reported_by, contact_phone, water_level_pct, risk_score, status, sla_hours_remaining, description, photo_url, latitude, longitude, user_id, user_email)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
        RETURNING *`,
       [
         complaintId,
@@ -189,8 +256,8 @@ router.post('/', async (req, res) => {
         category,
         resolvedLocation,
         zone,
-        reportedBy || 'Citizen Reporter',
-        contactPhone || '',
+        effectiveReportedBy,
+        effectivePhone,
         waterPct,
         riskScore,
         initialStatus,
@@ -199,6 +266,8 @@ router.post('/', async (req, res) => {
         photoUrl || null,
         latitude ? parseFloat(latitude) : null,
         longitude ? parseFloat(longitude) : null,
+        effectiveUserId ? parseInt(effectiveUserId, 10) : null,
+        effectiveUserEmail,
       ]
     );
 
@@ -247,3 +316,4 @@ router.patch('/:id/status', async (req, res) => {
 });
 
 export default router;
+

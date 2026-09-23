@@ -53,9 +53,12 @@ export default function RiskComplaintsVisualizer({ user }) {
   const loadData = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('drainwatch_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
       const [compRes, anaRes] = await Promise.all([
-        fetch(`/api/complaints?sortBy=${sortBy}`),
-        fetch('/api/complaints/analytics')
+        fetch(`/api/complaints?sortBy=${sortBy}`, { headers }),
+        fetch('/api/complaints/analytics', { headers })
       ]);
 
       if (compRes.ok) {
@@ -82,9 +85,14 @@ export default function RiskComplaintsVisualizer({ user }) {
   const handleStatusChange = async (id, newStatus) => {
     setActionLoading(id);
     try {
+      const token = localStorage.getItem('drainwatch_token');
+      const headers = { 
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
       const res = await fetch(`/api/complaints/${id}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
@@ -133,9 +141,14 @@ export default function RiskComplaintsVisualizer({ user }) {
     setSubmitMsg('');
 
     try {
+      const token = localStorage.getItem('drainwatch_token');
+      const headers = { 
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
       const res = await fetch('/api/complaints', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           title: newTitle,
           category: newCategory,
@@ -145,6 +158,8 @@ export default function RiskComplaintsVisualizer({ user }) {
           reportedBy: user?.fullName || 'Field Terminal Officer',
           contactPhone: user?.phone || '',
           description: newDescription,
+          userId: user?.id || null,
+          userEmail: user?.email || '',
         }),
       });
 

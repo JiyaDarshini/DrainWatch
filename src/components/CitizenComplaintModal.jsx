@@ -226,9 +226,15 @@ export default function CitizenComplaintModal({ isOpen, onClose, onSuccess, user
     setErrorMsg('');
 
     try {
+      const token = localStorage.getItem('drainwatch_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch('/api/complaints', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           title: `${category} - ${locationAddress.slice(0, 35)}`,
           category,
@@ -241,6 +247,8 @@ export default function CitizenComplaintModal({ isOpen, onClose, onSuccess, user
           longitude: coords?.lng || null,
           reportedBy: user?.fullName || 'Citizen Reporter',
           contactPhone: user?.phone || '',
+          userId: user?.id || null,
+          userEmail: user?.email || '',
         }),
       });
 

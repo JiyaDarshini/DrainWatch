@@ -30,7 +30,24 @@ export default function CitizenDashboard({ user }) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/complaints?sortBy=created_at&order=DESC');
+      const token = localStorage.getItem('drainwatch_token');
+      const params = new URLSearchParams({
+        sortBy: 'created_at',
+        order: 'DESC',
+        onlyMine: 'true',
+      });
+
+      if (user?.id) params.append('userId', user.id);
+      if (user?.email) params.append('userEmail', user.email);
+      if (user?.phone) params.append('phone', user.phone);
+      if (user?.fullName) params.append('reportedBy', user.fullName);
+
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`/api/complaints?${params.toString()}`, { headers });
       if (res.ok) {
         const cData = await res.json();
         setComplaints(cData.complaints || []);
@@ -46,7 +63,7 @@ export default function CitizenDashboard({ user }) {
     fetchData();
     const interval = setInterval(fetchData, 20000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.id, user?.email, user?.phone]);
 
   const handleComplaintSuccess = (newComplaint) => {
     fetchData();
