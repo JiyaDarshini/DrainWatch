@@ -71,6 +71,23 @@ export default function CitizenDashboard({ user }) {
     fetchData();
   };
 
+  const handleDeleteComplaint = async (id) => {
+    try {
+      const token = localStorage.getItem('drainwatch_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await fetch(`/api/complaints/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+      if (res.ok) {
+        setSelectedComplaint(null);
+        await fetchData();
+      }
+    } catch (err) {
+      console.error('Error deleting complaint:', err);
+    }
+  };
+
   const getStatusStep = (status) => {
     switch (status) {
       case 'Resolved': return 4;
@@ -545,6 +562,7 @@ export default function CitizenDashboard({ user }) {
         complaint={selectedComplaint}
         isOpen={!!selectedComplaint}
         onClose={() => setSelectedComplaint(null)}
+        onDeleteComplaint={handleDeleteComplaint}
         userRole="Citizen"
       />
 

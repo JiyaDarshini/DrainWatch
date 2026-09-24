@@ -110,6 +110,27 @@ export default function RiskComplaintsVisualizer({ user }) {
     }
   };
 
+  // Delete Complaint
+  const handleDeleteComplaint = async (id) => {
+    setActionLoading(id);
+    try {
+      const token = localStorage.getItem('drainwatch_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await fetch(`/api/complaints/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+      if (res.ok) {
+        setSelectedComplaint(null);
+        await loadData();
+      }
+    } catch (err) {
+      console.error('Error deleting complaint:', err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // Live Risk Calculation Preview in Modal
   const computeLiveRisk = (cat, zone, water) => {
     const categoryWeights = {
@@ -828,6 +849,7 @@ export default function RiskComplaintsVisualizer({ user }) {
         isOpen={!!selectedComplaint}
         onClose={() => setSelectedComplaint(null)}
         onStatusChange={handleStatusChange}
+        onDeleteComplaint={handleDeleteComplaint}
         actionLoading={actionLoading}
         userRole={user?.role}
       />

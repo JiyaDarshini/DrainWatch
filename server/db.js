@@ -601,6 +601,24 @@ function executeMemoryQuery(text, params = []) {
     return { rows: comp ? [{ ...comp }] : [], rowCount: comp ? 1 : 0 };
   }
 
+  // 12. DELETE complaints
+  if (lower.startsWith('delete from complaints')) {
+    const idParam = params[0];
+    const initialLen = memoryDb.complaints.length;
+    const deletedItem = memoryDb.complaints.find(c => 
+      c.id === parseInt(idParam, 10) || 
+      c.complaint_id === idParam ||
+      (params[1] && (c.id === parseInt(params[1], 10) || c.complaint_id === params[1]))
+    );
+    memoryDb.complaints = memoryDb.complaints.filter(c => 
+      c.id !== parseInt(idParam, 10) && 
+      c.complaint_id !== idParam &&
+      (!params[1] || (c.id !== parseInt(params[1], 10) && c.complaint_id !== params[1]))
+    );
+    const rowCount = initialLen - memoryDb.complaints.length;
+    return { rows: deletedItem ? [deletedItem] : [], rowCount };
+  }
+
   return { rows: [], rowCount: 0 };
 }
 

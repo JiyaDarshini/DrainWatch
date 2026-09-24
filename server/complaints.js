@@ -315,5 +315,35 @@ router.patch('/:id/status', async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/complaints/:id
+ * Delete a complaint by numeric ID or complaint_id string (e.g. DW-CMP-6239)
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let deleteRes;
+    
+    if (isNaN(id)) {
+      deleteRes = await pool.query('DELETE FROM complaints WHERE complaint_id = $1 RETURNING *', [id]);
+    } else {
+      deleteRes = await pool.query('DELETE FROM complaints WHERE id = $1 OR complaint_id = $2 RETURNING *', [parseInt(id, 10), id]);
+    }
+
+    if (deleteRes.rowCount === 0 && (!deleteRes.rows || deleteRes.rows.length === 0)) {
+      return res.status(404).json({ success: false, message: 'Complaint not found or already deleted' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Complaint deleted successfully',
+      deletedComplaint: deleteRes.rows ? deleteRes.rows[0] : null
+    });
+  } catch (error) {
+    console.error('Error deleting complaint:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete complaint' });
+  }
+});
+
 export default router;
 
