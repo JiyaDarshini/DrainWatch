@@ -8,14 +8,14 @@ export async function safeJson(res, defaultErrMsg = 'Error communicating with se
     const text = await res.text();
     if (!text || text.trim() === '') {
       if (!res.ok) {
-        throw new Error(`Backend server is offline (HTTP ${res.status}). Please run 'npm run dev' to start the backend server.`);
+        throw new Error(`Server returned HTTP error ${res.status}. Please try again.`);
       }
       return {};
     }
     return JSON.parse(text);
   } catch (err) {
     if (err instanceof SyntaxError) {
-      throw new Error('Cannot connect to backend server. Please verify the server is running on port 5050 (npm run dev).');
+      throw new Error('Unable to connect to backend server. Please verify your connection and try again.');
     }
     throw err;
   }
