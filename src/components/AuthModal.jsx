@@ -37,6 +37,8 @@ export default function AuthModal({ onAuthSuccess }) {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPhone, setRegisterPhone] = useState('');
   const [registerRole, setRegisterRole] = useState('Citizen');
+  const [assignedZone, setAssignedZone] = useState('Zone 4 - Central Basin / Ward 12');
+  const [assignedWard, setAssignedWard] = useState('Ward 12');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
@@ -172,6 +174,8 @@ export default function AuthModal({ onAuthSuccess }) {
           email: registerEmail,
           phone: registerPhone,
           role: registerRole,
+          assignedZone: registerRole === 'Field Inspector' ? assignedZone : null,
+          assignedWard: registerRole === 'Field Inspector' ? assignedWard : null,
           password: registerPassword,
           confirmPassword: registerConfirmPassword,
         }),
@@ -475,6 +479,76 @@ export default function AuthModal({ onAuthSuccess }) {
                   })}
                 </div>
               </div>
+
+              {registerRole === 'Field Inspector' && (
+                <div style={{
+                  background: '#FFFBEB',
+                  border: '1px solid #FDE68A',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '0.85rem',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', fontWeight: 700, color: '#92400E' }}>
+                    <HardHat size={16} />
+                    <span>Assign Field Inspector Jurisdiction</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#78350F', marginBottom: '0.25rem' }}>
+                        Assigned Zone
+                      </label>
+                      <select
+                        value={assignedZone}
+                        onChange={(e) => {
+                          setAssignedZone(e.target.value);
+                          if (e.target.value.includes('Zone 1')) setAssignedWard('Ward 4');
+                          else if (e.target.value.includes('Zone 2')) setAssignedWard('Ward 8');
+                          else if (e.target.value.includes('Zone 3')) setAssignedWard('Ward 15');
+                          else setAssignedWard('Ward 12');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '0.45rem 0.6rem',
+                          borderRadius: '6px',
+                          border: '1px solid #FCD34D',
+                          fontSize: '0.8rem',
+                          background: '#FFFFFF',
+                          outline: 'none'
+                        }}
+                      >
+                        <option value="Zone 4 - Central Basin / Ward 12">Zone 4 - Central Basin</option>
+                        <option value="Zone 1 - North Canal / Ward 4">Zone 1 - North Canal</option>
+                        <option value="Zone 2 - Industrial Outfall / Ward 8">Zone 2 - Industrial Outfall</option>
+                        <option value="Zone 3 - Metro Transit Corridor / Ward 15">Zone 3 - Metro Transit Corridor</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#78350F', marginBottom: '0.25rem' }}>
+                        Operational Ward
+                      </label>
+                      <input
+                        type="text"
+                        value={assignedWard}
+                        onChange={(e) => setAssignedWard(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.45rem 0.6rem',
+                          borderRadius: '6px',
+                          border: '1px solid #FCD34D',
+                          fontSize: '0.8rem',
+                          background: '#FFFFFF',
+                          outline: 'none'
+                        }}
+                        placeholder="e.g. Ward 12"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div className="form-group">

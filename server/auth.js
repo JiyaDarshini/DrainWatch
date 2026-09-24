@@ -35,7 +35,7 @@ export function authenticateToken(req, res, next) {
  */
 router.post('/register', async (req, res) => {
   try {
-    const { fullName, email, phone, password, confirmPassword, role } = req.body;
+    const { fullName, email, phone, password, confirmPassword, role, assignedZone, assignedWard } = req.body;
 
     if (!fullName || !email || !phone || !password) {
       return res.status(400).json({ success: false, message: 'Please provide all required fields' });
@@ -75,10 +75,10 @@ router.post('/register', async (req, res) => {
     // Insert user into PostgreSQL
     const userRole = role || 'Citizen';
     const insertRes = await pool.query(
-      `INSERT INTO users (full_name, email, phone, password_hash, role, is_phone_verified)
-       VALUES ($1, $2, $3, $4, $5, FALSE)
-       RETURNING id, full_name, email, phone, role, is_phone_verified, created_at`,
-      [fullName.trim(), cleanEmail, cleanPhone, passwordHash, userRole]
+      `INSERT INTO users (full_name, email, phone, password_hash, role, is_phone_verified, assigned_zone, assigned_ward)
+       VALUES ($1, $2, $3, $4, $5, FALSE, $6, $7)
+       RETURNING id, full_name, email, phone, role, is_phone_verified, assigned_zone, assigned_ward, created_at`,
+      [fullName.trim(), cleanEmail, cleanPhone, passwordHash, userRole, assignedZone || null, assignedWard || null]
     );
 
     const newUser = insertRes.rows[0];
@@ -103,6 +103,8 @@ router.post('/register', async (req, res) => {
         email: newUser.email,
         phone: newUser.phone,
         role: newUser.role,
+        assigned_zone: newUser.assigned_zone,
+        assigned_ward: newUser.assigned_ward,
         isPhoneVerified: newUser.is_phone_verified,
       },
       devOtpPreview: otp, // For developer convenience & demo preview
@@ -224,6 +226,8 @@ router.post('/verify-otp', async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        assigned_zone: user.assigned_zone,
+        assigned_ward: user.assigned_ward,
         isPhoneVerified: true,
       } : {
         id: 999,
@@ -290,6 +294,8 @@ router.post('/login', async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        assigned_zone: user.assigned_zone,
+        assigned_ward: user.assigned_ward,
         isPhoneVerified: user.is_phone_verified,
       },
     });
@@ -306,7 +312,7 @@ router.post('/login', async (req, res) => {
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const userRes = await pool.query(
-      'SELECT id, full_name, email, phone, role, is_phone_verified, created_at FROM users WHERE id = $1',
+      'SELECT id, full_name, email, phone, role, is_phone_verified, assigned_zone, assigned_ward, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
 
@@ -323,6 +329,8 @@ router.get('/me', authenticateToken, async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        assigned_zone: user.assigned_zone,
+        assigned_ward: user.assigned_ward,
         isPhoneVerified: user.is_phone_verified,
         createdAt: user.created_at,
       },

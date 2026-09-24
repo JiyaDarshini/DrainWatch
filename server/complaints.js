@@ -94,8 +94,9 @@ router.get('/', async (req, res) => {
     }
 
     if (zone && zone !== 'All') {
-      query += ` AND zone_criticality = $${paramIndex++}`;
-      params.push(zone);
+      query += ` AND (LOWER(zone_criticality) LIKE LOWER($${paramIndex}) OR LOWER(location) LIKE LOWER($${paramIndex}))`;
+      params.push(`%${zone}%`);
+      paramIndex++;
     }
 
     // User-specific filtering (for citizen view / my complaints only)
@@ -372,6 +373,69 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting complaint:', error);
     return res.status(500).json({ success: false, message: 'Failed to delete complaint' });
+  }
+});
+
+/**
+ * PATCH /api/complaints/:id/field-update
+ * Ground-Level Field Inspector Updates:
+ * - Status transition (Pending Inspection -> Inspected -> In Progress -> Resolved)
+ * - On-site verification photo & field notes
+ * - Flag as False Alarm / Duplicate
+ * - Escalate to Municipal Authority (requires higher budget / structural policy)
+ */
+router.patch('/:id/field-update', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      status, 
+      fieldNotes, 
+      verificationPhoto, 
+      flaggedReason, 
+      isEscalated, 
+      escalationNotes, 
+      inspectedBy 
+    } = req.body;
+
+    const newStatus = status || (isEscalated ? 'Escalated to Authority' : flaggedReason ? `Flagged: ${flaggedReason}` : 'Inspected');
+
+    const updateRes = await pool.query(
+      `UPDATE complaints 
+       SET status = $1, 
+           field_notes = $2, 
+           verification_photo = $3, 
+           flagged_reason = $4, 
+           is_escalated = $5, 
+           escalation_notes = $6, 
+           inspected_by = $7,
+           inspected_at = CURRENT_TIMESTAMP
+       WHERE id = $8 OR complaint_id = $9
+       RETURNING *`,
+      [
+        newStatus,
+        fieldNotes || '',
+        verificationPhoto || null,
+        flaggedReason || null,
+        Boolean(isEscalated),
+        escalationNotes || '',
+        inspectedBy || 'Field Inspector',
+        isNaN(id) ? -1 : parseInt(id, 10),
+        id
+      ]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Complaint not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Field inspection update logged successfully',
+      complaint: updateRes.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating field inspection:', error);
+    return res.status(500).json({ success: false, message: 'Failed to record field update' });
   }
 });
 

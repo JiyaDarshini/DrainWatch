@@ -590,15 +590,36 @@ function executeMemoryQuery(text, params = []) {
     return { rows: [newComplaint], rowCount: 1 };
   }
 
-  // 11. UPDATE complaints (e.g. status)
+  // 11. UPDATE complaints (handles simple status update and rich field inspection updates)
   if (lower.startsWith('update complaints')) {
-    const [status, id] = params;
-    const comp = memoryDb.complaints.find(c => c.id === parseInt(id, 10) || c.complaint_id === id);
-    if (comp) {
-      comp.status = status;
-      if (status === 'Resolved') comp.sla_hours_remaining = 0;
+    let id = params[params.length - 1];
+    let comp = memoryDb.complaints.find(c => c.id === parseInt(id, 10) || c.complaint_id === id);
+
+    if (!comp && params.length >= 2) {
+      // Check if id is passed as another param
+      comp = memoryDb.complaints.find(c => params.includes(c.id) || params.includes(c.complaint_id));
     }
-    return { rows: comp ? [{ ...comp }] : [], rowCount: comp ? 1 : 0 };
+
+    if (comp) {
+      if (params.length === 2 && typeof params[0] === 'string') {
+        comp.status = params[0];
+        if (params[0] === 'Resolved') comp.sla_hours_remaining = 0;
+      } else {
+        // Detailed field update: [status, fieldNotes, verificationPhoto, flaggedReason, isEscalated, escalationNotes, inspectedBy, id]
+        if (params[0]) comp.status = params[0];
+        if (params[1] !== undefined) comp.field_notes = params[1];
+        if (params[2] !== undefined) comp.verification_photo = params[2];
+        if (params[3] !== undefined) comp.flagged_reason = params[3];
+        if (params[4] !== undefined) comp.is_escalated = Boolean(params[4]);
+        if (params[5] !== undefined) comp.escalation_notes = params[5];
+        if (params[6] !== undefined) comp.inspected_by = params[6];
+        comp.inspected_at = new Date();
+        if (comp.status === 'Resolved') comp.sla_hours_remaining = 0;
+      }
+      return { rows: [{ ...comp }], rowCount: 1 };
+    }
+
+    return { rows: [], rowCount: 0 };
   }
 
   // 12. DELETE complaints
@@ -713,11 +734,22 @@ export async function initDb() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_zone VARCHAR(100);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_ward VARCHAR(100);
+
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS photo_url TEXT;
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS latitude NUMERIC(10, 7);
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS longitude NUMERIC(10, 7);
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS user_id INTEGER;
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS user_email VARCHAR(255);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS field_notes TEXT;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS verification_photo TEXT;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS inspection_status VARCHAR(50);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS flagged_reason VARCHAR(100);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS is_escalated BOOLEAN DEFAULT FALSE;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS escalation_notes TEXT;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS inspected_by VARCHAR(255);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS inspected_at TIMESTAMP WITH TIME ZONE;
     `);
 
     // Seed mock telemetry if empty

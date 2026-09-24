@@ -23,10 +23,15 @@ import {
 import RiskComplaintsVisualizer from './RiskComplaintsVisualizer';
 import CitizenDashboard from './CitizenDashboard';
 import CitizenComplaintModal from './CitizenComplaintModal';
+import FieldInspectorDashboard from './FieldInspectorDashboard';
 
 export default function Dashboard({ user, onLogout }) {
-  // Default to citizen view if user is registered as Citizen, otherwise municipal grid
-  const [activeTab, setActiveTab] = useState(user?.role === 'Citizen' ? 'citizen' : 'official');
+  // Default view based on role
+  const isInspector = user?.role === 'Field Inspector';
+  const isCitizen = user?.role === 'Citizen';
+  const [activeTab, setActiveTab] = useState(
+    isCitizen ? 'citizen' : isInspector ? 'inspector' : 'official'
+  );
   const [telemetry, setTelemetry] = useState([]);
   const [loading, setLoading] = useState(true);
   const [systemStats, setSystemStats] = useState(null);
@@ -163,39 +168,44 @@ export default function Dashboard({ user, onLogout }) {
           </div>
         </div>
 
-        {/* View Switcher Tabs (Only shown for Municipal Officers / Admins) */}
-        {user?.role !== 'Citizen' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{
-              background: 'var(--bg-secondary)',
-              padding: '0.3rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-beige)',
-              display: 'flex',
-              gap: '0.25rem'
-            }}>
+        {/* View Switcher Tabs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            background: 'var(--bg-secondary)',
+            padding: '0.3rem',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--border-beige)',
+            display: 'flex',
+            gap: '0.25rem',
+            flexWrap: 'wrap'
+          }}>
+            {/* Field Inspector Station Tab */}
+            {(user?.role === 'Field Inspector' || user?.role === 'Municipal Officer' || user?.role === 'Drainage Engineer') && (
               <button
-                onClick={() => setActiveTab('citizen')}
+                onClick={() => setActiveTab('inspector')}
                 style={{
-                  background: activeTab === 'citizen' ? '#FFFFFF' : 'transparent',
-                  color: activeTab === 'citizen' ? 'var(--navy-900)' : 'var(--text-muted)',
+                  background: activeTab === 'inspector' ? '#FFFFFF' : 'transparent',
+                  color: activeTab === 'inspector' ? 'var(--navy-900)' : 'var(--text-muted)',
                   border: 'none',
                   padding: '0.45rem 0.95rem',
                   borderRadius: '6px',
                   fontSize: '0.82rem',
-                  fontWeight: activeTab === 'citizen' ? 700 : 500,
+                  fontWeight: activeTab === 'inspector' ? 700 : 500,
                   cursor: 'pointer',
-                  boxShadow: activeTab === 'citizen' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                  boxShadow: activeTab === 'inspector' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.4rem',
                   transition: 'all 0.15s'
                 }}
               >
-                <Sparkles size={14} color="var(--water-cyan)" />
-                <span>Citizen View</span>
+                <HardHat size={14} color="#D97706" />
+                <span>Field Inspector Station</span>
               </button>
+            )}
 
+            {/* Municipal Grid Tab */}
+            {user?.role !== 'Citizen' && user?.role !== 'Field Inspector' && (
               <button
                 onClick={() => setActiveTab('official')}
                 style={{
@@ -217,22 +227,47 @@ export default function Dashboard({ user, onLogout }) {
                 <Activity size={14} color="var(--water-cyan)" />
                 <span>Municipal Grid & Triage</span>
               </button>
-            </div>
+            )}
 
+            {/* Citizen View Tab */}
             <button
-              onClick={fetchDashboardData}
-              className="btn-secondary-outline"
-              style={{ width: 'auto', padding: '0.5rem 0.85rem', fontSize: '0.8rem' }}
+              onClick={() => setActiveTab('citizen')}
+              style={{
+                background: activeTab === 'citizen' ? '#FFFFFF' : 'transparent',
+                color: activeTab === 'citizen' ? 'var(--navy-900)' : 'var(--text-muted)',
+                border: 'none',
+                padding: '0.45rem 0.95rem',
+                borderRadius: '6px',
+                fontSize: '0.82rem',
+                fontWeight: activeTab === 'citizen' ? 700 : 500,
+                cursor: 'pointer',
+                boxShadow: activeTab === 'citizen' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                transition: 'all 0.15s'
+              }}
             >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <Sparkles size={14} color="var(--water-cyan)" />
+              <span>Citizen View</span>
             </button>
           </div>
-        )}
+
+          <button
+            onClick={fetchDashboardData}
+            className="btn-secondary-outline"
+            style={{ width: 'auto', padding: '0.5rem 0.85rem', fontSize: '0.8rem' }}
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
       </div>
 
-      {/* RENDER CITIZEN DASHBOARD OR MUNICIPAL COMMAND VIEW */}
+      {/* RENDER VIEW ACCORDING TO ACTIVE TAB */}
       {activeTab === 'citizen' ? (
         <CitizenDashboard user={user} />
+      ) : activeTab === 'inspector' ? (
+        <FieldInspectorDashboard user={user} />
       ) : (
         <>
           {/* Telemetry Sensor Table */}
