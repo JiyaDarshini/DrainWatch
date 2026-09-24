@@ -18,7 +18,8 @@ import {
   User,
   Sliders,
   Sparkles,
-  Camera
+  Camera,
+  HardHat
 } from 'lucide-react';
 import RiskComplaintsVisualizer from './RiskComplaintsVisualizer';
 import CitizenDashboard from './CitizenDashboard';
