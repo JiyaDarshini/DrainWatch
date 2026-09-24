@@ -1,16 +1,9 @@
 import app from '../server/index.js';
 import { initDb } from '../server/db.js';
 
-let isDbInitialized = false;
+// Asynchronously initialize database in background on lambda start
+initDb().catch((err) => {
+  console.log('ℹ️ Serverless background db check:', err.message);
+});
 
-export default async function handler(req, res) {
-  if (!isDbInitialized) {
-    try {
-      await initDb();
-    } catch (err) {
-      console.warn('⚠️ Serverless DB initialization deferred:', err.message);
-    }
-    isDbInitialized = true;
-  }
-  return app(req, res);
-}
+export default app;
