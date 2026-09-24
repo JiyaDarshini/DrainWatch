@@ -20,8 +20,7 @@ import {
   Layers, 
   Zap, 
   ShieldCheck, 
-  Maximize2,
-  Trash2
+  Maximize2
 } from 'lucide-react';
 
 export default function ComplaintDetailModal({ 
@@ -29,7 +28,6 @@ export default function ComplaintDetailModal({
   isOpen, 
   onClose, 
   onStatusChange, 
-  onDeleteComplaint,
   actionLoading,
   userRole = 'Citizen'
 }) {
@@ -729,44 +727,8 @@ export default function ComplaintDetailModal({
             flexWrap: 'wrap',
             gap: '1rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {onDeleteComplaint && (
-                <button
-                  onClick={() => {
-                    if (window.confirm(`Are you sure you want to permanently delete complaint ${complaint.complaint_id || ''}?`)) {
-                      onDeleteComplaint(complaint.id || complaint.complaint_id);
-                    }
-                  }}
-                  disabled={actionLoading === (complaint.id || complaint.complaint_id)}
-                  style={{
-                    background: '#FEE2E2',
-                    color: '#DC2626',
-                    border: '1px solid #FECACA',
-                    padding: '0.45rem 1rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#DC2626';
-                    e.currentTarget.style.color = '#FFFFFF';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#FEE2E2';
-                    e.currentTarget.style.color = '#DC2626';
-                  }}
-                >
-                  <Trash2 size={14} /> Delete Complaint
-                </button>
-              )}
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                DrainWatch Incident Intelligence & Geotagged Hazard Registry
-              </span>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              DrainWatch Incident Intelligence & Geotagged Hazard Registry
             </div>
             <button
               onClick={onClose}
