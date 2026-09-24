@@ -862,6 +862,27 @@ body {
   color: var(--warning-amber);
 }
 
+.clickable-table-row {
+  cursor: pointer;
+  transition: all 0.18s ease-in-out;
+}
+
+.clickable-table-row:hover {
+  background-color: rgba(2, 132, 199, 0.07) !important;
+  transform: translateY(-1px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Responsive Breakpoints */
 @media (max-width: 960px) {
   .auth-container {

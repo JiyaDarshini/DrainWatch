@@ -19,12 +19,14 @@ import {
   HelpCircle
 } from 'lucide-react';
 import CitizenComplaintModal from './CitizenComplaintModal';
+import ComplaintDetailModal from './ComplaintDetailModal';
 
 export default function CitizenDashboard({ user }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [filterTab, setFilterTab] = useState('All'); // 'All' | 'Active' | 'Resolved'
 
   const fetchData = async () => {
@@ -308,14 +310,17 @@ export default function CitizenDashboard({ user }) {
               return (
                 <div
                   key={item.id || item.complaint_id}
+                  onClick={() => setSelectedComplaint(item)}
                   style={{
                     border: '1px solid var(--border-beige)',
                     borderRadius: 'var(--radius-md)',
                     padding: '1.25rem 1.5rem',
                     background: '#FFFFFF',
                     transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                    boxShadow: '0 2px 6px rgba(10, 25, 47, 0.03)'
+                    boxShadow: '0 2px 6px rgba(10, 25, 47, 0.03)',
+                    cursor: 'pointer'
                   }}
+                  title="Click to view full description, photo & risk analysis"
                 >
                   <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                     {/* Photo Thumbnail */}
@@ -533,6 +538,14 @@ export default function CitizenDashboard({ user }) {
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleComplaintSuccess}
         user={user}
+      />
+
+      {/* Complaint Detail & Analysis Modal */}
+      <ComplaintDetailModal
+        complaint={selectedComplaint}
+        isOpen={!!selectedComplaint}
+        onClose={() => setSelectedComplaint(null)}
+        userRole="Citizen"
       />
 
       {/* Full Resolution Photo Lightbox Modal */}

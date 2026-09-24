@@ -27,6 +27,7 @@ import {
   Eye
 } from 'lucide-react';
 import CitizenComplaintModal from './CitizenComplaintModal';
+import ComplaintDetailModal from './ComplaintDetailModal';
 
 export default function RiskComplaintsVisualizer({ user }) {
   const [complaints, setComplaints] = useState([]);
@@ -38,6 +39,7 @@ export default function RiskComplaintsVisualizer({ user }) {
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
 
   // New Complaint Form state
   const [newTitle, setNewTitle] = useState('');
@@ -96,6 +98,9 @@ export default function RiskComplaintsVisualizer({ user }) {
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
+        if (selectedComplaint && selectedComplaint.id === id) {
+          setSelectedComplaint(prev => ({ ...prev, status: newStatus }));
+        }
         await loadData();
       }
     } catch (err) {
@@ -569,7 +574,17 @@ export default function RiskComplaintsVisualizer({ user }) {
                   const isTopRanked = index < 3 && activeFilter === 'All';
 
                   return (
-                    <tr key={item.id} style={{ background: isTopRanked ? 'rgba(254, 226, 226, 0.2)' : 'transparent' }}>
+                    <tr 
+                      key={item.id} 
+                      onClick={() => setSelectedComplaint(item)}
+                      style={{ 
+                        background: isTopRanked ? 'rgba(254, 226, 226, 0.25)' : 'transparent',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease'
+                      }}
+                      className="clickable-table-row"
+                      title="Click to view full description, photo evidence & risk analysis"
+                    >
                       {/* Priority Rank Badge */}
                       <td>
                         <div style={{
@@ -749,7 +764,7 @@ export default function RiskComplaintsVisualizer({ user }) {
 
                       {/* Status & Actions */}
                       <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }} onClick={(e) => e.stopPropagation()}>
                           <span className={`badge-pill ${item.status.includes('Critical') ? 'badge-critical' : item.status === 'Resolved' ? 'badge-normal' : 'badge-warning'}`}>
                             {item.status}
                           </span>
@@ -806,6 +821,16 @@ export default function RiskComplaintsVisualizer({ user }) {
           </table>
         </div>
       </div>
+
+      {/* DETAILED COMPLAINT, PHOTO & ANALYSIS MODAL */}
+      <ComplaintDetailModal
+        complaint={selectedComplaint}
+        isOpen={!!selectedComplaint}
+        onClose={() => setSelectedComplaint(null)}
+        onStatusChange={handleStatusChange}
+        actionLoading={actionLoading}
+        userRole={user?.role}
+      />
 
       {/* LODGE NEW COMPLAINT MODAL (WITH PHOTO + AUTO GPS + DESCRIPTION) */}
       <CitizenComplaintModal
