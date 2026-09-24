@@ -4,7 +4,14 @@ import Dashboard from './components/Dashboard';
 import DrainWatchLogo from './components/DrainWatchLogo';
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('drainwatch_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [token, setToken] = useState(localStorage.getItem('drainwatch_token') || null);
 
   // Verify stored session token on initial mount
@@ -17,12 +24,17 @@ export default function App() {
         });
         if (res.ok) {
           const data = await res.json();
-          setUser(data.user);
+          if (data.user) {
+            setUser(data.user);
+            localStorage.setItem('drainwatch_user', JSON.stringify(data.user));
+          }
         } else {
-          // Token expired or invalid
-          localStorage.removeItem('drainwatch_token');
-          setToken(null);
-          setUser(null);
+          // If server token is expired and no valid local user session
+          if (!localStorage.getItem('drainwatch_user')) {
+            localStorage.removeItem('drainwatch_token');
+            setToken(null);
+            setUser(null);
+          }
         }
       } catch (err) {
         console.error('Session verification error:', err);
@@ -33,6 +45,9 @@ export default function App() {
 
   const handleAuthSuccess = (userData, userToken) => {
     setUser(userData);
+    if (userData) {
+      localStorage.setItem('drainwatch_user', JSON.stringify(userData));
+    }
     if (userToken) {
       setToken(userToken);
       localStorage.setItem('drainwatch_token', userToken);
@@ -41,6 +56,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('drainwatch_token');
+    localStorage.removeItem('drainwatch_user');
     setToken(null);
     setUser(null);
   };
