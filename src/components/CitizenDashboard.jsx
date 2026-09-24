@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import CitizenComplaintModal from './CitizenComplaintModal';
 import ComplaintDetailModal from './ComplaintDetailModal';
+import { safeJson } from '../utils/api';
 
 export default function CitizenDashboard({ user }) {
   const [complaints, setComplaints] = useState([]);
@@ -31,6 +32,13 @@ export default function CitizenDashboard({ user }) {
 
   const fetchData = async () => {
     setLoading(true);
+    let localList = [];
+    try {
+      localList = JSON.parse(localStorage.getItem('drainwatch_local_complaints') || '[]');
+    } catch (e) {
+      localList = [];
+    }
+
     try {
       const token = localStorage.getItem('drainwatch_token');
       const params = new URLSearchParams({
@@ -50,15 +58,23 @@ export default function CitizenDashboard({ user }) {
       }
 
       const res = await fetch(`/api/complaints?${params.toString()}`, { headers });
-      if (res.ok) {
-        const cData = await res.json();
-        setComplaints(cData.complaints || []);
+      const cData = await safeJson(res);
+      if (res.ok && cData.complaints) {
+        const map = new Map();
+        localList.forEach(c => map.set(c.complaint_id || c.id, c));
+        cData.complaints.forEach(c => map.set(c.complaint_id || c.id, c));
+        const merged = Array.from(map.values());
+        merged.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setComplaints(merged);
+        return;
       }
     } catch (err) {
-      console.error('Error fetching citizen complaints:', err);
+      console.warn('Backend complaints fetch deferred, using local storage:', err);
     } finally {
       setLoading(false);
     }
+
+    setComplaints(localList);
   };
 
   useEffect(() => {
