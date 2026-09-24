@@ -669,25 +669,40 @@ function executeMemoryQuery(text, params = []) {
 }
 
 // Resilient Pool Proxy
+let dbInitPromise = null;
+
+export async function ensureDbInitialized() {
+  if (!connectionString || !rawPool) {
+    return false;
+  }
+  if (!dbInitPromise) {
+    dbInitPromise = initDb();
+  }
+  return dbInitPromise;
+}
+
 export const pool = {
   async query(text, params) {
-    if (isNeonConnected && rawPool) {
+    if (rawPool) {
       try {
-        return await rawPool.query(text, params);
+        const res = await rawPool.query(text, params);
+        isNeonConnected = true;
+        return res;
       } catch (err) {
         console.warn('⚠️ Neon query error, using resilient fallback:', err.message);
-        isNeonConnected = false;
         return executeMemoryQuery(text, params);
       }
     }
     return executeMemoryQuery(text, params);
   },
   async connect() {
-    if (isNeonConnected && rawPool) {
+    if (rawPool) {
       try {
-        return await rawPool.connect();
+        const client = await rawPool.connect();
+        isNeonConnected = true;
+        return client;
       } catch (err) {
-        isNeonConnected = false;
+        console.warn('⚠️ Neon connect error:', err.message);
       }
     }
     return {

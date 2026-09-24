@@ -1,9 +1,12 @@
 import app from '../server/index.js';
-import { initDb } from '../server/db.js';
+import { ensureDbInitialized } from '../server/db.js';
 
-// Asynchronously initialize database in background on lambda start
-initDb().catch((err) => {
-  console.log('ℹ️ Serverless background db check:', err.message);
-});
+export default async function handler(req, res) {
+  try {
+    await ensureDbInitialized();
+  } catch (err) {
+    console.warn('ℹ️ Serverless DB initialization note:', err.message);
+  }
+  return app(req, res);
+}
 
-export default app;
