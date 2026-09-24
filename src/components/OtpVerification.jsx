@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Smartphone, CheckCircle, RefreshCw, AlertCircle, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { safeJson } from '../utils/api';
 
-export default function OtpVerification({ phone, onVerified, onCancel, initialDevOtp }) {
+export default function OtpVerification({ phone, onVerified, onCancel, initialDevOtp, userInfo }) {
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [loading, setLoading] = useState(false);
@@ -89,7 +89,15 @@ export default function OtpVerification({ phone, onVerified, onCancel, initialDe
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, otp: enteredOtp }),
+        body: JSON.stringify({
+          phone,
+          otp: enteredOtp,
+          fullName: userInfo?.fullName,
+          email: userInfo?.email,
+          role: userInfo?.role,
+          assignedZone: userInfo?.assignedZone,
+          assignedWard: userInfo?.assignedWard,
+        }),
       });
 
       const data = await safeJson(res);
@@ -101,7 +109,7 @@ export default function OtpVerification({ phone, onVerified, onCancel, initialDe
       setSuccessMsg('Phone verified successfully! Redirecting...');
       setTimeout(() => {
         onVerified(data);
-      }, 1200);
+      }, 800);
     } catch (err) {
       setErrorMsg(err.message || 'Failed to verify OTP code');
     } finally {
