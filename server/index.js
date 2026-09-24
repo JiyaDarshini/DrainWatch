@@ -52,7 +52,7 @@ app.get('/api/telemetry', async (req, res) => {
   }
 });
 
-// Start server
+// Start server listener for local execution
 async function startServer() {
   app.listen(PORT, () => {
     console.log(`🌊 DrainWatch Backend Server running at http://localhost:${PORT}`);
@@ -64,4 +64,9 @@ async function startServer() {
   });
 }
 
-startServer();
+// Only listen on port when not running as a Vercel Serverless function
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
