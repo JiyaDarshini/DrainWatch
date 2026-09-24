@@ -235,41 +235,6 @@ export default function Dashboard({ user, onLogout }) {
         <CitizenDashboard user={user} />
       ) : (
         <>
-          {/* Grid Stats */}
-          <div className="dash-stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon-wrapper" style={{ background: 'var(--navy-50)', color: 'var(--navy-600)' }}>
-                <Waves size={22} />
-              </div>
-              <div className="stat-val">{telemetry.length || 4} Active</div>
-              <div className="stat-label">Drainage Monitoring Nodes</div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon-wrapper" style={{ background: 'var(--success-bg)', color: 'var(--success-emerald)' }}>
-                <CheckCircle size={22} />
-              </div>
-              <div className="stat-val">Nominal</div>
-              <div className="stat-label">Catchment Basin Health</div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon-wrapper" style={{ background: 'var(--warning-bg)', color: 'var(--warning-amber)' }}>
-                <AlertTriangle size={22} />
-              </div>
-              <div className="stat-val">1 Node Alert</div>
-              <div className="stat-label">North Arterial #12 High Flow</div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon-wrapper" style={{ background: 'var(--bg-secondary)', color: 'var(--navy-900)' }}>
-                <Database size={22} />
-              </div>
-              <div className="stat-val">{systemStats?.registeredUsers || 1} User(s)</div>
-              <div className="stat-label">Neon DB Registered Accounts</div>
-            </div>
-          </div>
-
           {/* Telemetry Sensor Table */}
           <div className="data-table-card">
             <div className="table-header">
@@ -278,12 +243,8 @@ export default function Dashboard({ user, onLogout }) {
                   Live Waterway & Sump Telemetry
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Data synchronized directly with Neon PostgreSQL cluster. Last sync: {lastRefreshed.toLocaleTimeString()}
+                  Real-time monitoring telemetry. Last sync: {lastRefreshed.toLocaleTimeString()}
                 </p>
-              </div>
-              <div className="db-pill">
-                <span className="pulse-dot"></span>
-                <span>NEON POSTGRES CONNECTED</span>
               </div>
             </div>
 
