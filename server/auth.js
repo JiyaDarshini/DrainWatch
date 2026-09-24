@@ -158,13 +158,14 @@ router.post('/send-otp', async (req, res) => {
  */
 router.post('/verify-otp', async (req, res) => {
   try {
-    const { phone, otp } = req.body;
+    const { phone, otp, fullName, email, role, assignedZone, assignedWard } = req.body;
     if (!phone || !otp) {
       return res.status(400).json({ success: false, message: 'Phone and OTP code are required' });
     }
 
     const cleanPhone = phone.trim().replace(/\s+/g, '');
     const cleanOtp = otp.toString().trim();
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
 
     // Check OTP in DB
     const otpRes = await pool.query(
@@ -187,17 +188,26 @@ router.post('/verify-otp', async (req, res) => {
     }
 
     // Mark user phone as verified in Postgres
-    const userRes = await pool.query(
+    let userRes = await pool.query(
       `UPDATE users 
        SET is_phone_verified = TRUE, updated_at = NOW()
        WHERE phone = $1
-       RETURNING id, full_name, email, phone, role, is_phone_verified`,
+       RETURNING id, full_name, email, phone, role, assigned_zone, assigned_ward, is_phone_verified`,
       [cleanPhone]
     );
 
     let user = userRes.rows[0];
 
-    // Fallback: if user was registered with slightly different phone format, check by phone
+    // Fallback 1: Lookup by email if phone didn't match directly
+    if (!user && cleanEmail) {
+      const uCheck = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1 LIMIT 1', [cleanEmail]);
+      if (uCheck.rows.length > 0) {
+        user = uCheck.rows[0];
+        await pool.query('UPDATE users SET is_phone_verified = TRUE, phone = $1 WHERE id = $2', [cleanPhone, user.id]);
+      }
+    }
+
+    // Fallback 2: Lookup by phone directly
     if (!user) {
       const uCheck = await pool.query('SELECT * FROM users WHERE phone = $1 LIMIT 1', [cleanPhone]);
       if (uCheck.rows.length > 0) {
@@ -206,35 +216,32 @@ router.post('/verify-otp', async (req, res) => {
       }
     }
 
-    // Generate JWT token if user exists
-    let token = null;
-    if (user) {
-      token = jwt.sign(
-        { id: user.id, email: user.email, phone: user.phone, role: user.role },
-        JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-    }
+    const resolvedFullName = user?.full_name || user?.fullName || fullName || 'Citizen User';
+    const resolvedEmail = user?.email || cleanEmail || 'citizen@drainwatch.city';
+    const resolvedPhone = user?.phone || cleanPhone;
+    const resolvedRole = user?.role || role || 'Citizen';
+    const resolvedZone = user?.assigned_zone || assignedZone || null;
+    const resolvedWard = user?.assigned_ward || assignedWard || null;
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user ? user.id : 999, email: resolvedEmail, phone: resolvedPhone, role: resolvedRole },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     return res.json({
       success: true,
       message: 'Mobile number verified successfully!',
       token,
-      user: user ? {
-        id: user.id,
-        fullName: user.full_name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        assigned_zone: user.assigned_zone,
-        assigned_ward: user.assigned_ward,
-        isPhoneVerified: true,
-      } : {
-        id: 999,
-        fullName: 'Verified Citizen',
-        email: 'user@drainwatch.city',
-        phone: cleanPhone,
-        role: 'Citizen',
+      user: {
+        id: user ? user.id : 999,
+        fullName: resolvedFullName,
+        email: resolvedEmail,
+        phone: resolvedPhone,
+        role: resolvedRole,
+        assigned_zone: resolvedZone,
+        assigned_ward: resolvedWard,
         isPhoneVerified: true,
       },
     });
