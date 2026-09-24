@@ -1,22 +1,15 @@
 /**
  * Safe response JSON parsing utility.
- * Prevents "Failed to execute 'json' on 'Response': Unexpected end of JSON input"
- * when the server is offline, restarting, or returns empty / non-JSON responses.
+ * Prevents crashing when server is starting, returns HTML 500, or returns non-JSON.
  */
 export async function safeJson(res, defaultErrMsg = 'Error communicating with server') {
   try {
     const text = await res.text();
     if (!text || text.trim() === '') {
-      if (!res.ok) {
-        throw new Error(`Server returned HTTP error ${res.status}. Please try again.`);
-      }
-      return {};
+      return { success: res.ok, message: res.ok ? 'OK' : `HTTP error ${res.status}` };
     }
     return JSON.parse(text);
   } catch (err) {
-    if (err instanceof SyntaxError) {
-      throw new Error('Unable to connect to backend server. Please verify your connection and try again.');
-    }
-    throw err;
+    return { success: false, message: 'Offline or non-JSON server response', isOffline: true };
   }
 }
