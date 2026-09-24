@@ -27,12 +27,6 @@ import CitizenComplaintModal from './CitizenComplaintModal';
 import FieldInspectorDashboard from './FieldInspectorDashboard';
 
 export default function Dashboard({ user, onLogout }) {
-  // Default view based on role
-  const isInspector = user?.role === 'Field Inspector';
-  const isCitizen = user?.role === 'Citizen';
-  const [activeTab, setActiveTab] = useState(
-    isCitizen ? 'citizen' : isInspector ? 'inspector' : 'official'
-  );
   const [telemetry, setTelemetry] = useState([]);
   const [loading, setLoading] = useState(true);
   const [systemStats, setSystemStats] = useState(null);
@@ -70,21 +64,62 @@ export default function Dashboard({ user, onLogout }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Role Configuration and Metadata
+  const userRole = user?.role || 'Citizen';
+
+  const roleMetadata = {
+    'Citizen': {
+      title: 'Citizen Portal & Community Surveillance',
+      subtitle: 'Report neighborhood drainage blockages, track resolution progress with photo evidence, and view local hazard alerts.',
+      badgeText: 'Citizen Portal Active',
+      badgeClass: 'badge-normal',
+      icon: UserCheck,
+      iconColor: 'var(--water-cyan)'
+    },
+    'Field Inspector': {
+      title: 'Field Inspector Command Station',
+      subtitle: `Assigned Field Operations: ${user?.assigned_zone || 'Central Basin'}. On-site verification, resolution proof submission, and rapid response.`,
+      badgeText: 'Field Inspector Active',
+      badgeClass: 'badge-warning',
+      icon: HardHat,
+      iconColor: '#D97706'
+    },
+    'Municipal Officer': {
+      title: 'Municipal Grid & Civic Triage Center',
+      subtitle: 'Citywide civic hazard governance, automated AI risk ranking, SLA monitoring, and inter-departmental field dispatch.',
+      badgeText: 'Municipal Officer Active',
+      badgeClass: 'badge-normal',
+      icon: Building,
+      iconColor: '#2563EB'
+    },
+    'Drainage Engineer': {
+      title: 'Drainage Engineering & Telemetry Station',
+      subtitle: 'Real-time hydraulic telemetry surveillance, waterway flow depth, sump overflow sensors, and structural civil risk tracking.',
+      badgeText: 'Drainage Engineer Active',
+      badgeClass: 'badge-critical',
+      icon: Radio,
+      iconColor: '#0D9488'
+    }
+  };
+
+  const currentRoleInfo = roleMetadata[userRole] || roleMetadata['Citizen'];
+  const RoleIcon = currentRoleInfo.icon;
+
   return (
     <div className="dashboard-layout">
       {/* Top Banner Hero */}
       <div className="dashboard-hero">
         <div style={{ position: 'relative', zIndex: 2 }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '0.35rem' }}>
-            Welcome, {user?.fullName || 'Infrastructure Officer'}
+            Welcome, {user?.fullName || 'User'}
           </h1>
-          <p style={{ fontSize: '0.9rem', color: '#94A3B8', maxWidth: '600px' }}>
-            DrainWatch Social Infrastructure & Urban Drainage Surveillance Grid. Real-time civic hazard logging & telemetry network.
+          <p style={{ fontSize: '0.9rem', color: '#94A3B8', maxWidth: '650px' }}>
+            {currentRoleInfo.subtitle}
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 2, flexWrap: 'wrap' }}>
-          {/* Quick Register Complaint CTA */}
+          {/* Quick Register Complaint CTA for all roles */}
           <button
             onClick={() => setIsComplaintModalOpen(true)}
             style={{
@@ -106,7 +141,7 @@ export default function Dashboard({ user, onLogout }) {
           </button>
 
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>{user?.role || 'Citizen'}</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>{userRole}</div>
             <div style={{ fontSize: '0.75rem', color: '#38BDF8', fontFamily: 'var(--font-mono)' }}>{user?.email}</div>
           </div>
           <button
@@ -125,7 +160,7 @@ export default function Dashboard({ user, onLogout }) {
         </div>
       </div>
 
-      {/* User Profile & Verification Status Banner */}
+      {/* User Profile & Role Verification Banner */}
       <div style={{
         background: '#FFFFFF',
         border: '1px solid var(--border-beige)',
@@ -150,136 +185,79 @@ export default function Dashboard({ user, onLogout }) {
             justifyContent: 'center',
             border: '1px solid var(--border-beige)'
           }}>
-            <UserCheck size={24} />
+            <RoleIcon size={24} color={currentRoleInfo.iconColor} />
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--navy-900)' }}>{user?.fullName}</h3>
-              <span className="brand-badge">{user?.role}</span>
+              <span className="brand-badge">{userRole}</span>
               {user?.isPhoneVerified && (
                 <span className="badge-pill badge-normal">
                   <ShieldCheck size={12} /> Verified Phone
                 </span>
               )}
+              {user?.assigned_zone && (
+                <span className="badge-pill badge-warning">
+                  <MapPin size={12} /> {user?.assigned_zone}
+                </span>
+              )}
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', gap: '1.25rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
-              <span><strong>Phone:</strong> {user?.phone}</span>
+              <span><strong>Phone:</strong> {user?.phone || 'N/A'}</span>
               <span><strong>Email:</strong> {user?.email}</span>
             </div>
           </div>
         </div>
 
-        {/* View Switcher Tabs */}
+        {/* Role Active Status Indicator & Refresh */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
             background: 'var(--bg-secondary)',
-            padding: '0.3rem',
+            padding: '0.45rem 0.95rem',
             borderRadius: 'var(--radius-sm)',
             border: '1px solid var(--border-beige)',
             display: 'flex',
-            gap: '0.25rem',
-            flexWrap: 'wrap'
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            color: 'var(--navy-900)'
           }}>
-            {/* Field Inspector Station Tab */}
-            {(user?.role === 'Field Inspector' || user?.role === 'Municipal Officer' || user?.role === 'Drainage Engineer') && (
-              <button
-                onClick={() => setActiveTab('inspector')}
-                style={{
-                  background: activeTab === 'inspector' ? '#FFFFFF' : 'transparent',
-                  color: activeTab === 'inspector' ? 'var(--navy-900)' : 'var(--text-muted)',
-                  border: 'none',
-                  padding: '0.45rem 0.95rem',
-                  borderRadius: '6px',
-                  fontSize: '0.82rem',
-                  fontWeight: activeTab === 'inspector' ? 700 : 500,
-                  cursor: 'pointer',
-                  boxShadow: activeTab === 'inspector' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  transition: 'all 0.15s'
-                }}
-              >
-                <HardHat size={14} color="#D97706" />
-                <span>Field Inspector Station</span>
-              </button>
-            )}
-
-            {/* Municipal Grid Tab */}
-            {user?.role !== 'Citizen' && user?.role !== 'Field Inspector' && (
-              <button
-                onClick={() => setActiveTab('official')}
-                style={{
-                  background: activeTab === 'official' ? '#FFFFFF' : 'transparent',
-                  color: activeTab === 'official' ? 'var(--navy-900)' : 'var(--text-muted)',
-                  border: 'none',
-                  padding: '0.45rem 0.95rem',
-                  borderRadius: '6px',
-                  fontSize: '0.82rem',
-                  fontWeight: activeTab === 'official' ? 700 : 500,
-                  cursor: 'pointer',
-                  boxShadow: activeTab === 'official' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  transition: 'all 0.15s'
-                }}
-              >
-                <Activity size={14} color="var(--water-cyan)" />
-                <span>Municipal Grid & Triage</span>
-              </button>
-            )}
-
-            {/* Citizen View Tab */}
-            <button
-              onClick={() => setActiveTab('citizen')}
-              style={{
-                background: activeTab === 'citizen' ? '#FFFFFF' : 'transparent',
-                color: activeTab === 'citizen' ? 'var(--navy-900)' : 'var(--text-muted)',
-                border: 'none',
-                padding: '0.45rem 0.95rem',
-                borderRadius: '6px',
-                fontSize: '0.82rem',
-                fontWeight: activeTab === 'citizen' ? 700 : 500,
-                cursor: 'pointer',
-                boxShadow: activeTab === 'citizen' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.15s'
-              }}
-            >
-              <Sparkles size={14} color="var(--water-cyan)" />
-              <span>Citizen View</span>
-            </button>
+            <Activity size={14} color="var(--water-cyan)" />
+            <span>{currentRoleInfo.title}</span>
           </div>
 
           <button
             onClick={fetchDashboardData}
             className="btn-secondary-outline"
             style={{ width: 'auto', padding: '0.5rem 0.85rem', fontSize: '0.8rem' }}
+            title="Refresh Live Data"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
 
-      {/* RENDER VIEW ACCORDING TO ACTIVE TAB */}
-      {activeTab === 'citizen' ? (
+      {/* STRICT ROLE-BASED DASHBOARD RENDERING */}
+      {userRole === 'Citizen' && (
         <CitizenDashboard user={user} />
-      ) : activeTab === 'inspector' ? (
+      )}
+
+      {userRole === 'Field Inspector' && (
         <FieldInspectorDashboard user={user} />
-      ) : (
+      )}
+
+      {userRole === 'Municipal Officer' && (
         <>
-          {/* Telemetry Sensor Table */}
+          {/* Municipal Live Telemetry Sensor Table */}
           <div className="data-table-card">
             <div className="table-header">
               <div>
                 <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--navy-900)' }}>
-                  Live Waterway & Sump Telemetry
+                  Citywide Waterway & Sump Telemetry Network
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Real-time monitoring telemetry. Last sync: {lastRefreshed.toLocaleTimeString()}
+                  Real-time municipal telemetry monitoring. Last sync: {lastRefreshed.toLocaleTimeString()}
                 </p>
               </div>
             </div>
@@ -330,9 +308,80 @@ export default function Dashboard({ user, onLogout }) {
             </div>
           </div>
 
-          {/* Municipal Risk Ranking & Complaints Visualization System */}
+          {/* Municipal Risk Ranking & Complaints Triage */}
           <RiskComplaintsVisualizer user={user} />
         </>
+      )}
+
+      {userRole === 'Drainage Engineer' && (
+        <>
+          {/* Hydraulic Telemetry & Flow Surveillance Table */}
+          <div className="data-table-card">
+            <div className="table-header">
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--navy-900)' }}>
+                  Hydraulic Grid & Waterway Telemetry Surveillance
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Live hydraulic sensor telemetry & hydrodynamic capacity tracking. Last sync: {lastRefreshed.toLocaleTimeString()}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="styled-table">
+                <thead>
+                  <tr>
+                    <th>Location & Basin</th>
+                    <th>Water Depth</th>
+                    <th>Flow Velocity</th>
+                    <th>Status</th>
+                    <th>Telemetry Node</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {telemetry.map((item) => (
+                    <tr key={item.id}>
+                      <td style={{ fontWeight: 600, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <MapPin size={16} color="var(--water-cyan)" />
+                        {item.location}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ width: '80px', height: '6px', background: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                width: `${item.water_level_pct}%`,
+                                height: '100%',
+                                background: item.water_level_pct > 80 ? 'var(--danger-crimson)' : item.water_level_pct > 60 ? 'var(--warning-amber)' : 'var(--water-cyan)'
+                              }}
+                            ></div>
+                          </div>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{item.water_level_pct}%</span>
+                        </div>
+                      </td>
+                      <td style={{ fontFamily: 'var(--font-mono)' }}>{item.flow_rate_m3s || '5.4'} m³/s</td>
+                      <td>
+                        <span className={`badge-pill ${item.status.includes('Critical') ? 'badge-critical' : item.status.includes('Moderate') ? 'badge-warning' : 'badge-normal'}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{item.reported_by}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Drainage Engineering Risk & Blockage Analysis */}
+          <RiskComplaintsVisualizer user={user} />
+        </>
+      )}
+
+      {/* Fallback for unrecognized role */}
+      {!['Citizen', 'Field Inspector', 'Municipal Officer', 'Drainage Engineer'].includes(userRole) && (
+        <CitizenDashboard user={user} />
       )}
 
       {/* Global Citizen Complaint Modal Trigger */}
