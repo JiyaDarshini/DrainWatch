@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import RiskComplaintsVisualizer from './RiskComplaintsVisualizer';
 import CitizenDashboard from './CitizenDashboard';
-import CitizenComplaintModal from './CitizenComplaintModal';
 import FieldInspectorDashboard from './FieldInspectorDashboard';
 import DrainageEngineerDashboard from './DrainageEngineerDashboard';
 
@@ -32,7 +31,6 @@ export default function Dashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [systemStats, setSystemStats] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
-  const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -119,28 +117,7 @@ export default function Dashboard({ user, onLogout }) {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 2, flexWrap: 'wrap' }}>
-          {/* Quick Register Complaint CTA for all roles */}
-          <button
-            onClick={() => setIsComplaintModalOpen(true)}
-            style={{
-              background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
-              color: '#FFFFFF',
-              border: 'none',
-              padding: '0.65rem 1.25rem',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
-            }}
-          >
-            <Camera size={16} /> Register Complaint
-          </button>
-
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', position: 'relative', zIndex: 2, flexWrap: 'wrap' }}>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>{userRole}</div>
             <div style={{ fontSize: '0.75rem', color: '#38BDF8', fontFamily: 'var(--font-mono)' }}>{user?.email}</div>
@@ -322,16 +299,6 @@ export default function Dashboard({ user, onLogout }) {
       {!['Citizen', 'Field Inspector', 'Municipal Officer', 'Drainage Engineer'].includes(userRole) && (
         <CitizenDashboard user={user} />
       )}
-
-      {/* Global Citizen Complaint Modal Trigger */}
-      <CitizenComplaintModal
-        isOpen={isComplaintModalOpen}
-        onClose={() => setIsComplaintModalOpen(false)}
-        onSuccess={() => {
-          fetchDashboardData();
-        }}
-        user={user}
-      />
     </div>
   );
 }
