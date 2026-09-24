@@ -69,9 +69,6 @@ export default function Dashboard({ user, onLogout }) {
       {/* Top Banner Hero */}
       <div className="dashboard-hero">
         <div style={{ position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(255,255,255,0.1)', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, color: '#38BDF8', marginBottom: '0.75rem' }}>
-            <Activity size={14} className="animate-pulse" /> Live Telemetry Command Station
-          </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '0.35rem' }}>
             Welcome, {user?.fullName || 'Infrastructure Officer'}
           </h1>
@@ -162,7 +159,6 @@ export default function Dashboard({ user, onLogout }) {
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', gap: '1.25rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
               <span><strong>Phone:</strong> {user?.phone}</span>
               <span><strong>Email:</strong> {user?.email}</span>
-              <span><strong>DB Instance:</strong> Neon PostgreSQL (Connected)</span>
             </div>
           </div>
         </div>
