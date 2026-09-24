@@ -48,6 +48,7 @@ export default function AuthModal({ onAuthSuccess }) {
   // OTP Verification state
   const [verifyingPhone, setVerifyingPhone] = useState(null);
   const [devOtpPreview, setDevOtpPreview] = useState('');
+  const [registeredUserInfo, setRegisteredUserInfo] = useState(null);
 
   // Forgot password modal state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -83,6 +84,7 @@ export default function AuthModal({ onAuthSuccess }) {
     setRegisterPassword('');
     setRegisterConfirmPassword('');
     setRegisterRole('Citizen');
+    setRegisteredUserInfo(null);
     setErrorMsg('');
     setSuccessMsg('');
   };
@@ -165,17 +167,27 @@ export default function AuthModal({ onAuthSuccess }) {
     setErrorMsg('');
     setSuccessMsg('');
 
+    const regData = {
+      fullName: fullName.trim(),
+      email: registerEmail.trim().toLowerCase(),
+      phone: registerPhone.trim(),
+      role: registerRole,
+      assignedZone: registerRole === 'Field Inspector' ? assignedZone : null,
+      assignedWard: registerRole === 'Field Inspector' ? assignedWard : null,
+    };
+    setRegisteredUserInfo(regData);
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName,
-          email: registerEmail,
-          phone: registerPhone,
-          role: registerRole,
-          assignedZone: registerRole === 'Field Inspector' ? assignedZone : null,
-          assignedWard: registerRole === 'Field Inspector' ? assignedWard : null,
+          fullName: regData.fullName,
+          email: regData.email,
+          phone: regData.phone,
+          role: regData.role,
+          assignedZone: regData.assignedZone,
+          assignedWard: regData.assignedWard,
           password: registerPassword,
           confirmPassword: registerConfirmPassword,
         }),
@@ -201,10 +213,20 @@ export default function AuthModal({ onAuthSuccess }) {
     if (otpData.token) {
       localStorage.setItem('drainwatch_token', otpData.token);
     }
+    const resolvedUser = {
+      ...otpData.user,
+      fullName: (otpData.user?.fullName && otpData.user?.fullName !== 'Verified Citizen') ? otpData.user.fullName : (registeredUserInfo?.fullName || otpData.user?.fullName || 'Citizen User'),
+      email: (otpData.user?.email && otpData.user?.email !== 'user@drainwatch.city') ? otpData.user.email : (registeredUserInfo?.email || otpData.user?.email),
+      phone: otpData.user?.phone || registeredUserInfo?.phone || verifyingPhone,
+      role: otpData.user?.role || registeredUserInfo?.role || 'Citizen',
+      assigned_zone: otpData.user?.assigned_zone || registeredUserInfo?.assignedZone,
+      assigned_ward: otpData.user?.assigned_ward || registeredUserInfo?.assignedWard,
+      isPhoneVerified: true
+    };
     setVerifyingPhone(null);
     resetRegisterFields();
     resetLoginFields();
-    onAuthSuccess(otpData.user, otpData.token);
+    onAuthSuccess(resolvedUser, otpData.token);
   };
 
   if (verifyingPhone) {
@@ -213,6 +235,7 @@ export default function AuthModal({ onAuthSuccess }) {
         <OtpVerification
           phone={verifyingPhone}
           initialDevOtp={devOtpPreview}
+          userInfo={registeredUserInfo}
           onVerified={handleOtpVerified}
           onCancel={() => setVerifyingPhone(null)}
         />
