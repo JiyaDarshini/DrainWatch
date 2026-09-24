@@ -111,31 +111,47 @@ export default function RiskComplaintsVisualizer({ user }) {
   };
 
   // Live Risk Calculation Preview in Modal
-  const computeLiveRisk = (cat, zone, water) => {
+  const computeLiveRisk = (cat, zone, water, locText = '', descText = '') => {
     const categoryWeights = {
       'Culvert Collapse': 92,
       'Toxic Sludge & Overflow': 84,
       'Sump Overflow': 76,
       'Severe Blockage': 66,
-      'Open Manhole Hazard': 62,
+      'Open Manhole Hazard': 64,
       'Siltation': 46,
       'Trash Grate Clog': 28,
     };
     const zoneMultipliers = {
-      'Critical Health Zone': 1.35,
-      'High Traffic Transit': 1.25,
-      'School Safety Zone': 1.20,
-      'Dense Commercial': 1.10,
+      'Critical Health Zone': 1.45,
+      'School Safety Zone': 1.35,
+      'High Traffic Transit': 1.28,
+      'Dense Commercial': 1.15,
       'Residential': 1.00,
-      'Public Park': 0.80,
+      'Public Park': 0.85,
     };
+
+    let effectiveZone = zone;
+    let landmarkBoost = 0;
+    const combined = `${locText} ${descText}`.toLowerCase();
+
+    if (/hospital|clinic|ambulance|icu|emergency|medical|dispensary|health center/i.test(combined) || zone === 'Critical Health Zone') {
+      effectiveZone = 'Critical Health Zone';
+      landmarkBoost = 16;
+    } else if (/school|college|kindergarten|campus|university|nursery|vidyalaya|child|student/i.test(combined) || zone === 'School Safety Zone') {
+      effectiveZone = 'School Safety Zone';
+      landmarkBoost = 14;
+    } else if (/metro|railway|station|transit|bus stand|terminal|underpass|subway|highway/i.test(combined) || zone === 'High Traffic Transit') {
+      effectiveZone = 'High Traffic Transit';
+      landmarkBoost = 9;
+    }
+
     const baseWeight = categoryWeights[cat] || 50;
-    const zoneMult = zoneMultipliers[zone] || 1.0;
-    const rawScore = (baseWeight * 0.45) + (water * 0.30) + ((baseWeight * zoneMult) * 0.25);
-    return Math.min(99, Math.max(12, Math.round(rawScore)));
+    const zoneMult = zoneMultipliers[effectiveZone] || 1.0;
+    const rawScore = (baseWeight * 0.40) + (water * 0.25) + ((baseWeight * zoneMult) * 0.35) + landmarkBoost;
+    return Math.min(99, Math.max(15, Math.round(rawScore)));
   };
 
-  const previewRiskScore = computeLiveRisk(newCategory, newZone, newWaterLevel);
+  const previewRiskScore = computeLiveRisk(newCategory, newZone, newWaterLevel, newLocation, newDescription);
 
   // Submit Complaint
   const handleCreateComplaint = async (e) => {
@@ -669,17 +685,43 @@ export default function RiskComplaintsVisualizer({ user }) {
                             <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--navy-900)' }}>
                               {item.location}
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.25rem' }}>
-                              <span style={{
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                color: 'var(--navy-700)',
-                                background: 'var(--bg-tertiary)',
-                                padding: '0.1rem 0.45rem',
-                                borderRadius: '4px'
-                              }}>
-                                {item.zone_criticality}
-                              </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                              {item.zone_criticality === 'Critical Health Zone' || /hospital|clinic|ambulance|icu/i.test(`${item.location} ${item.title} ${item.description}`) ? (
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700,
+                                  color: '#DC2626',
+                                  background: '#FEE2E2',
+                                  padding: '0.1rem 0.45rem',
+                                  borderRadius: '4px',
+                                  border: '1px solid #FECACA'
+                                }}>
+                                  🏥 Hospital Priority #1
+                                </span>
+                              ) : item.zone_criticality === 'School Safety Zone' || /school|college|kindergarten/i.test(`${item.location} ${item.title} ${item.description}`) ? (
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700,
+                                  color: '#D97706',
+                                  background: '#FEF3C7',
+                                  padding: '0.1rem 0.45rem',
+                                  borderRadius: '4px',
+                                  border: '1px solid #FDE68A'
+                                }}>
+                                  🏫 School Zone Priority
+                                </span>
+                              ) : (
+                                <span style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 600,
+                                  color: 'var(--navy-700)',
+                                  background: 'var(--bg-tertiary)',
+                                  padding: '0.1rem 0.45rem',
+                                  borderRadius: '4px'
+                                }}>
+                                  {item.zone_criticality}
+                                </span>
+                              )}
                               {item.latitude && item.longitude && (
                                 <span style={{
                                   fontSize: '0.68rem',

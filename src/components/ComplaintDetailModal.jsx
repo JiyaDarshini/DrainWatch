@@ -82,22 +82,64 @@ export default function ComplaintDetailModal({
     'Toxic Sludge & Overflow': 84,
     'Sump Overflow': 76,
     'Severe Blockage': 66,
-    'Open Manhole Hazard': 62,
+    'Open Manhole Hazard': 64,
     'Siltation': 46,
     'Trash Grate Clog': 28,
   };
 
   const zoneMultipliers = {
-    'Critical Health Zone': 1.35,
-    'High Traffic Transit': 1.25,
-    'School Safety Zone': 1.20,
-    'Dense Commercial': 1.10,
+    'Critical Health Zone': 1.45,
+    'Hospital & Emergency Care': 1.45,
+    'School Safety Zone': 1.35,
+    'School & Educational Campus': 1.35,
+    'High Traffic Transit': 1.28,
+    'Metro & Transit Corridor': 1.28,
+    'Dense Commercial': 1.15,
     'Residential': 1.00,
-    'Public Park': 0.80,
+    'Public Park': 0.85,
   };
 
+  // Landmark & Facility Proximity Analysis
+  const fullContext = `${complaint.location || ''} ${complaint.description || ''} ${complaint.title || ''} ${complaint.zone_criticality || ''}`.toLowerCase();
+  let facilityType = null;
+  let facilityTitle = null;
+  let facilityBoost = 0;
+  let facilityDesc = null;
+  let facilityBadgeColor = '#EF4444';
+  let facilityBadgeBg = '#FEE2E2';
+
+  if (/hospital|clinic|ambulance|icu|emergency|medical|dispensary|health center|phc|nursing/i.test(fullContext) || complaint.zone_criticality?.includes('Health') || complaint.zone_criticality?.includes('Hospital')) {
+    facilityType = 'hospital';
+    facilityTitle = '🏥 Hospital & Emergency Healthcare Zone';
+    facilityBoost = 16;
+    facilityDesc = 'Top Priority Emergency Protocol: Unobstructed ambulance transit, ICU emergency access, and bio-hazard drainage safety are strictly prioritized.';
+    facilityBadgeColor = '#DC2626';
+    facilityBadgeBg = '#FEE2E2';
+  } else if (/school|college|kindergarten|campus|university|nursery|vidyalaya|student|child|play school/i.test(fullContext) || complaint.zone_criticality?.includes('School')) {
+    facilityType = 'school';
+    facilityTitle = '🏫 School & Educational Campus Safety Zone';
+    facilityBoost = 14;
+    facilityDesc = 'High Priority Child Protection: Pedestrian child safety, school bus access corridors, and open drain drowning hazards are prioritized.';
+    facilityBadgeColor = '#D97706';
+    facilityBadgeBg = '#FEF3C7';
+  } else if (/metro|railway|station|transit|bus stand|terminal|underpass|subway|highway|arterial/i.test(fullContext) || complaint.zone_criticality?.includes('Transit')) {
+    facilityType = 'transit';
+    facilityTitle = '🚆 Metro & High-Traffic Transit Hub';
+    facilityBoost = 9;
+    facilityDesc = 'Mass Transit Protection: Rapid deployment to prevent severe public commuter gridlocks, underpass inundation, and vehicle stalling.';
+    facilityBadgeColor = '#2563EB';
+    facilityBadgeBg = '#EFF6FF';
+  } else if (/market|bazaar|food street|commercial|mall/i.test(fullContext) || complaint.zone_criticality?.includes('Commercial')) {
+    facilityType = 'commercial';
+    facilityTitle = '🏢 Dense Commercial & Food Market Hub';
+    facilityBoost = 5;
+    facilityDesc = 'Civic Hygiene & Commerce Protection: Active runoff and sanitation safeguard for dense foot traffic and market operations.';
+    facilityBadgeColor = '#059669';
+    facilityBadgeBg = '#ECFDF5';
+  }
+
   const catWeight = categoryWeights[complaint.category] || 50;
-  const zoneMult = zoneMultipliers[complaint.zone_criticality] || 1.0;
+  const zoneMult = zoneMultipliers[complaint.zone_criticality] || (facilityType === 'hospital' ? 1.45 : facilityType === 'school' ? 1.35 : facilityType === 'transit' ? 1.28 : 1.0);
   const waterPct = complaint.water_level_pct || 50;
 
   const lat = complaint.latitude ? parseFloat(complaint.latitude).toFixed(5) : null;
@@ -540,7 +582,7 @@ export default function ComplaintDetailModal({
                   {/* Category Factor */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', background: 'var(--bg-secondary)', borderRadius: '6px' }}>
                     <div>
-                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.8rem' }}>1. Incident Category Severity (45%)</div>
+                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.8rem' }}>1. Incident Category Severity (40%)</div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{complaint.category}</div>
                     </div>
                     <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.85rem' }}>
@@ -551,7 +593,7 @@ export default function ComplaintDetailModal({
                   {/* Water Depth Factor */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', background: 'var(--bg-secondary)', borderRadius: '6px' }}>
                     <div>
-                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.8rem' }}>2. Water Depth Inundation (30%)</div>
+                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.8rem' }}>2. Water Depth Inundation (25%)</div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Water level telemetry reading</div>
                     </div>
                     <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: waterPct > 70 ? '#EF4444' : 'var(--navy-900)', fontSize: '0.85rem' }}>
@@ -562,15 +604,49 @@ export default function ComplaintDetailModal({
                   {/* Zone Multiplier */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', background: 'var(--bg-secondary)', borderRadius: '6px' }}>
                     <div>
-                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.8rem' }}>3. Urban Vulnerability Multiplier (25%)</div>
+                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.8rem' }}>3. Location & Zone Vulnerability (35%)</div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{complaint.zone_criticality || 'Residential'}</div>
                     </div>
                     <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: zoneMult > 1.1 ? '#EA580C' : 'var(--navy-900)', fontSize: '0.85rem' }}>
                       {zoneMult.toFixed(2)}x factor
                     </span>
                   </div>
+
+                  {/* Landmark Sensitivity Boost */}
+                  {facilityBoost > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', background: facilityBadgeBg, border: `1px solid ${facilityBadgeColor}`, borderRadius: '6px' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, color: facilityBadgeColor, fontSize: '0.8rem' }}>4. Landmark Proximity Priority Boost</div>
+                        <div style={{ fontSize: '0.72rem', color: facilityBadgeColor }}>{facilityTitle}</div>
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: facilityBadgeColor, fontSize: '0.85rem' }}>
+                        +{facilityBoost} pts boost
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Landmark Proximity & Facility Priority Card */}
+              {facilityType && (
+                <div style={{
+                  background: facilityBadgeBg,
+                  border: `1px solid ${facilityBadgeColor}`,
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1.25rem',
+                  boxShadow: 'var(--shadow-sm)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <ShieldAlert size={18} color={facilityBadgeColor} />
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: facilityBadgeColor, margin: 0 }}>
+                      Location Sensitivity: {facilityTitle}
+                    </h3>
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--navy-900)', lineHeight: 1.5, margin: 0, fontWeight: 500 }}>
+                    {facilityDesc}
+                  </p>
+                </div>
+              )}
 
               {/* Hydrological Status & Water Depth */}
               <div style={{

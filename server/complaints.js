@@ -5,35 +5,58 @@ import { pool } from './db.js';
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'drainwatch_secret_jwt_key_2025';
 
-// Risk Calculation Algorithm
-function calculateRiskScore({ category, zoneCriticality, waterLevelPct }) {
+// Location-Aware Risk Calculation Algorithm
+function calculateRiskScore({ category, zoneCriticality, waterLevelPct, location = '', description = '', title = '' }) {
   const categoryWeights = {
     'Culvert Collapse': 92,
     'Toxic Sludge & Overflow': 84,
     'Sump Overflow': 76,
     'Severe Blockage': 66,
-    'Open Manhole Hazard': 62,
+    'Open Manhole Hazard': 64,
     'Siltation': 46,
     'Trash Grate Clog': 28,
   };
 
   const zoneMultipliers = {
-    'Critical Health Zone': 1.35,
-    'High Traffic Transit': 1.25,
-    'School Safety Zone': 1.20,
-    'Dense Commercial': 1.10,
+    'Critical Health Zone': 1.45,
+    'Hospital & Emergency Care': 1.45,
+    'School Safety Zone': 1.35,
+    'School & Educational Campus': 1.35,
+    'High Traffic Transit': 1.28,
+    'Metro & Transit Corridor': 1.28,
+    'Dense Commercial': 1.15,
     'Residential': 1.00,
-    'Public Park': 0.80,
+    'Public Park': 0.85,
   };
 
+  // Landmark Proximity & Facility Detection Heuristics
+  let detectedZone = zoneCriticality || 'Residential';
+  let landmarkBoost = 0;
+  const fullText = `${location} ${description} ${title}`.toLowerCase();
+
+  if (/hospital|clinic|ambulance|icu|emergency|medical|dispensary|health center|phc|nursing/i.test(fullText) || zoneCriticality?.includes('Health') || zoneCriticality?.includes('Hospital')) {
+    detectedZone = 'Critical Health Zone';
+    landmarkBoost = 16; // Hospital proximity priority boost
+  } else if (/school|college|kindergarten|campus|university|nursery|vidyalaya|student|child|play school/i.test(fullText) || zoneCriticality?.includes('School')) {
+    detectedZone = 'School Safety Zone';
+    landmarkBoost = 14; // School zone priority boost
+  } else if (/metro|railway|station|transit|bus stand|terminal|underpass|subway|highway|arterial/i.test(fullText) || zoneCriticality?.includes('Transit')) {
+    if (detectedZone === 'Residential' || detectedZone === 'Public Park') {
+      detectedZone = 'High Traffic Transit';
+    }
+    landmarkBoost = 9; // Transit corridor boost
+  } else if (/market|bazaar|food street|commercial|mall/i.test(fullText) || zoneCriticality?.includes('Commercial')) {
+    landmarkBoost = 5;
+  }
+
   const baseWeight = categoryWeights[category] || 50;
-  const zoneMult = zoneMultipliers[zoneCriticality] || 1.0;
+  const zoneMult = zoneMultipliers[detectedZone] || 1.0;
   const waterPct = Math.min(100, Math.max(0, parseInt(waterLevelPct, 10) || 50));
 
   // Composite Weighted Score
-  // 45% Category Severity + 30% Water Level + 25% Zone Vulnerability Factor
-  const rawScore = (baseWeight * 0.45) + (waterPct * 0.30) + ((baseWeight * zoneMult) * 0.25);
-  return Math.min(99, Math.max(12, Math.round(rawScore)));
+  // 40% Category Severity + 25% Water Depth + 35% Location Vulnerability + Landmark Boost
+  const rawScore = (baseWeight * 0.40) + (waterPct * 0.25) + ((baseWeight * zoneMult) * 0.35) + landmarkBoost;
+  return Math.min(99, Math.max(15, Math.round(rawScore)));
 }
 
 /**
@@ -228,7 +251,14 @@ router.post('/', async (req, res) => {
     const complaintId = `DW-CMP-${Math.floor(1000 + Math.random() * 9000)}`;
     const zone = zoneCriticality || 'Residential';
     const waterPct = parseInt(waterLevelPct, 10) || 55;
-    const riskScore = calculateRiskScore({ category, zoneCriticality: zone, waterLevelPct: waterPct });
+    const riskScore = calculateRiskScore({ 
+      category, 
+      zoneCriticality: zone, 
+      waterLevelPct: waterPct, 
+      location: resolvedLocation, 
+      description, 
+      title: derivedTitle 
+    });
 
     const effectiveUserId = userId || (tokenUser ? tokenUser.id : null);
     const effectiveUserEmail = (userEmail && userEmail.trim().toLowerCase()) || (tokenUser ? tokenUser.email.toLowerCase() : '');

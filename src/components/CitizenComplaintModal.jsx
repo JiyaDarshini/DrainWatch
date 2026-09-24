@@ -174,36 +174,52 @@ export default function CitizenComplaintModal({ isOpen, onClose, onSuccess, user
     );
   };
 
-  // 3. Dynamic Risk Preview Calculation
-  const calculatePreviewRisk = (cat, z, water) => {
+  // 3. Dynamic Location-Aware Risk Preview Calculation
+  const calculatePreviewRisk = (cat, z, water, locText = '', descText = '') => {
     const categoryWeights = {
       'Culvert Collapse': 92,
       'Toxic Sludge & Overflow': 84,
       'Sump Overflow': 76,
       'Severe Blockage': 66,
-      'Open Manhole Hazard': 62,
+      'Open Manhole Hazard': 64,
       'Siltation': 46,
       'Trash Grate Clog': 28,
     };
     const zoneMultipliers = {
-      'Critical Health Zone': 1.35,
-      'High Traffic Transit': 1.25,
-      'School Safety Zone': 1.20,
-      'Dense Commercial': 1.10,
+      'Critical Health Zone': 1.45,
+      'School Safety Zone': 1.35,
+      'High Traffic Transit': 1.28,
+      'Dense Commercial': 1.15,
       'Residential': 1.00,
-      'Public Park': 0.80,
+      'Public Park': 0.85,
     };
+
+    let effectiveZone = z;
+    let landmarkBoost = 0;
+    const combined = `${locText} ${descText}`.toLowerCase();
+
+    if (/hospital|clinic|ambulance|icu|emergency|medical|dispensary|health center/i.test(combined) || z === 'Critical Health Zone') {
+      effectiveZone = 'Critical Health Zone';
+      landmarkBoost = 16;
+    } else if (/school|college|kindergarten|campus|university|nursery|vidyalaya|child|student/i.test(combined) || z === 'School Safety Zone') {
+      effectiveZone = 'School Safety Zone';
+      landmarkBoost = 14;
+    } else if (/metro|railway|station|transit|bus stand|terminal|underpass|subway|highway/i.test(combined) || z === 'High Traffic Transit') {
+      effectiveZone = 'High Traffic Transit';
+      landmarkBoost = 9;
+    }
+
     const baseWeight = categoryWeights[cat] || 50;
-    const zoneMult = zoneMultipliers[z] || 1.0;
-    const rawScore = (baseWeight * 0.45) + (water * 0.30) + ((baseWeight * zoneMult) * 0.25);
-    return Math.min(99, Math.max(12, Math.round(rawScore)));
+    const zoneMult = zoneMultipliers[effectiveZone] || 1.0;
+    const rawScore = (baseWeight * 0.40) + (water * 0.25) + ((baseWeight * zoneMult) * 0.35) + landmarkBoost;
+    return Math.min(99, Math.max(15, Math.round(rawScore)));
   };
 
-  const previewScore = calculatePreviewRisk(category, zone, waterLevel);
+  const previewScore = calculatePreviewRisk(category, zone, waterLevel, locationAddress, description);
 
   const getRiskBadge = (score) => {
-    if (score >= 80) return { label: 'CRITICAL PRIORITY', bg: '#FEE2E2', border: '#EF4444', text: '#B91C1C', sla: '4 Hours Rapid Dispatch' };
-    if (score >= 60) return { label: 'HIGH PRIORITY', bg: '#FEF3C7', border: '#F59E0B', text: '#B45309', sla: '12 Hours Field Response' };
+    if (score >= 80) return { label: 'CRITICAL FIRST-RESPONSE PRIORITY', bg: '#FEE2E2', border: '#EF4444', text: '#B91C1C', sla: '4 Hours Rapid Dispatch (Hospital / Emergency Protocol)' };
+    if (score >= 60) return { label: 'HIGH PRIORITY DISPATCH', bg: '#FEF3C7', border: '#F59E0B', text: '#B45309', sla: '8 Hours Field Response (School / Transit Protocol)' };
     if (score >= 40) return { label: 'MODERATE CONCERN', bg: '#FEF9C3', border: '#EAB308', text: '#854D0E', sla: '24 Hours Municipal Triage' };
     return { label: 'ROUTINE CIVIC LOG', bg: '#DCFCE7', border: '#10B981', text: '#15803D', sla: '48 Hours Patrol Check' };
   };
@@ -705,6 +721,27 @@ export default function CitizenComplaintModal({ isOpen, onClose, onSuccess, user
                   <option value="Culvert Collapse">Culvert / Retaining Wall Collapse</option>
                   <option value="Siltation">Slow Drainage Siltation</option>
                   <option value="Trash Grate Clog">Surface Trash Grate Clog</option>
+                </select>
+              </div>
+
+              {/* Sensitive Facility / Landmark Proximity Selection */}
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Nearby Critical Facility / Landmark Proximity</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--water-cyan)', fontWeight: 700 }}>Priority Dispatch Routing</span>
+                </label>
+                <select
+                  className="input-field"
+                  style={{ paddingLeft: '0.75rem', fontSize: '0.85rem' }}
+                  value={zone}
+                  onChange={(e) => setZone(e.target.value)}
+                >
+                  <option value="Residential">🏡 Residential Neighborhood (Standard Catchment)</option>
+                  <option value="Critical Health Zone">🏥 Near Hospital / Emergency Clinic / ICU Access (Top Emergency Priority #1)</option>
+                  <option value="School Safety Zone">🏫 Near School / College / Child Care Center (High Urgency Student Safety)</option>
+                  <option value="High Traffic Transit">🚆 Near Metro / Bus Station / Highway (Public Transit Protocol)</option>
+                  <option value="Dense Commercial">🏢 Near Public Food Market / Commercial Street (Sanitation Protocol)</option>
+                  <option value="Public Park">🌳 Public Park / Recreational Ground</option>
                 </select>
               </div>
 
