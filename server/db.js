@@ -601,7 +601,21 @@ function executeMemoryQuery(text, params = []) {
     }
 
     if (comp) {
-      if (params.length === 2 && typeof params[0] === 'string') {
+      if (lower.includes('technical_cause') || lower.includes('recommended_fix') || lower.includes('estimated_cost')) {
+        // Engineer Assessment Update: [status, technicalCause, recommendedFix, estimatedCost, requiredMachinery, materialSpecs, estimatedDuration, isStructuralRisk, structuralRiskLevel, engineerNotes, assessedBy, id, complaint_id]
+        if (params[0]) comp.status = params[0];
+        if (params[1] !== undefined) comp.technical_cause = params[1];
+        if (params[2] !== undefined) comp.recommended_fix = params[2];
+        if (params[3] !== undefined) comp.estimated_cost = parseInt(params[3], 10) || 0;
+        if (params[4] !== undefined) comp.required_machinery = params[4];
+        if (params[5] !== undefined) comp.material_specs = params[5];
+        if (params[6] !== undefined) comp.estimated_duration = params[6];
+        if (params[7] !== undefined) comp.is_structural_risk = Boolean(params[7]);
+        if (params[8] !== undefined) comp.structural_risk_level = params[8];
+        if (params[9] !== undefined) comp.engineer_notes = params[9];
+        if (params[10] !== undefined) comp.assessed_by = params[10];
+        comp.assessed_at = new Date();
+      } else if (params.length === 2 && typeof params[0] === 'string') {
         comp.status = params[0];
         if (params[0] === 'Resolved') comp.sla_hours_remaining = 0;
       } else {
@@ -750,6 +764,17 @@ export async function initDb() {
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS escalation_notes TEXT;
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS inspected_by VARCHAR(255);
       ALTER TABLE complaints ADD COLUMN IF NOT EXISTS inspected_at TIMESTAMP WITH TIME ZONE;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS technical_cause VARCHAR(255);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS recommended_fix VARCHAR(255);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS estimated_cost INTEGER DEFAULT 0;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS required_machinery TEXT;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS material_specs TEXT;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS estimated_duration VARCHAR(100);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS is_structural_risk BOOLEAN DEFAULT FALSE;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS structural_risk_level VARCHAR(100);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS engineer_notes TEXT;
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS assessed_by VARCHAR(255);
+      ALTER TABLE complaints ADD COLUMN IF NOT EXISTS assessed_at TIMESTAMP WITH TIME ZONE;
     `);
 
     // Seed mock telemetry if empty
