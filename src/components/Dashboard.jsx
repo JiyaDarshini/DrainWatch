@@ -19,18 +19,28 @@ import {
   Sliders,
   Sparkles,
   Camera,
-  HardHat
+  HardHat,
+  Edit3,
+  X,
+  Save,
+  Mail
 } from 'lucide-react';
 import RiskComplaintsVisualizer from './RiskComplaintsVisualizer';
 import CitizenDashboard from './CitizenDashboard';
 import FieldInspectorDashboard from './FieldInspectorDashboard';
 import DrainageEngineerDashboard from './DrainageEngineerDashboard';
 
-export default function Dashboard({ user, onLogout }) {
+export default function Dashboard({ user, onLogout, onUpdateUser }) {
   const [telemetry, setTelemetry] = useState([]);
   const [loading, setLoading] = useState(true);
   const [systemStats, setSystemStats] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
+
+  // Profile Edit Modal State
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editName, setEditName] = useState(user?.fullName || 'Madhi');
+  const [editEmail, setEditEmail] = useState(user?.email || 'madhi13@gmail.com');
+  const [editPhone, setEditPhone] = useState(user?.phone || '8967452310');
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -62,6 +72,27 @@ export default function Dashboard({ user, onLogout }) {
     const interval = setInterval(fetchDashboardData, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    const updated = {
+      ...user,
+      fullName: editName.trim() || user?.fullName || 'Madhi',
+      email: editEmail.trim() || user?.email || 'madhi13@gmail.com',
+      phone: editPhone.trim() || user?.phone || '8967452310',
+    };
+    if (onUpdateUser) {
+      onUpdateUser(updated);
+    }
+    localStorage.setItem('drainwatch_user', JSON.stringify(updated));
+    try {
+      const localAccounts = JSON.parse(localStorage.getItem('drainwatch_registered_users') || '[]');
+      const filtered = localAccounts.filter(a => a.email !== updated.email && a.phone !== updated.phone);
+      filtered.push(updated);
+      localStorage.setItem('drainwatch_registered_users', JSON.stringify(filtered));
+    } catch (err) {}
+    setShowEditProfile(false);
+  };
 
   // Role Configuration and Metadata
   const userRole = user?.role || 'Citizen';
@@ -110,7 +141,7 @@ export default function Dashboard({ user, onLogout }) {
       <div className="dashboard-hero">
         <div style={{ position: 'relative', zIndex: 2 }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '0.35rem' }}>
-            Welcome, {user?.fullName || 'User'}
+            Welcome, {user?.fullName || 'Madhi'}
           </h1>
           <p style={{ fontSize: '0.9rem', color: '#94A3B8', maxWidth: '650px' }}>
             {currentRoleInfo.subtitle}
@@ -169,6 +200,30 @@ export default function Dashboard({ user, onLogout }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--navy-900)' }}>{user?.fullName}</h3>
               <span className="brand-badge">{userRole}</span>
+              <button
+                onClick={() => {
+                  setEditName(user?.fullName === 'Citizen User' ? 'Madhi' : user?.fullName);
+                  setEditEmail(user?.email?.includes('@drainwatch.city') ? 'madhi13@gmail.com' : user?.email);
+                  setEditPhone(user?.phone || '8967452310');
+                  setShowEditProfile(true);
+                }}
+                style={{
+                  background: 'rgba(14, 165, 233, 0.1)',
+                  color: 'var(--water-cyan)',
+                  border: '1px solid rgba(14, 165, 233, 0.3)',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+                title="Edit your profile name and email"
+              >
+                <Edit3 size={12} /> Edit Profile
+              </button>
               {user?.isPhoneVerified && (
                 <span className="badge-pill badge-normal">
                   <ShieldCheck size={12} /> Verified Phone
@@ -215,6 +270,91 @@ export default function Dashboard({ user, onLogout }) {
           </button>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {showEditProfile && (
+        <div className="modal-backdrop">
+          <div className="modal-card" style={{ maxWidth: '450px' }}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <Edit3 size={20} color="var(--water-cyan)" />
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--navy-900)' }}>Edit Profile Details</h3>
+              </div>
+              <button
+                onClick={() => setShowEditProfile(false)}
+                className="btn-close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+              <div className="form-group">
+                <label className="form-label">Full Name</label>
+                <div className="input-container">
+                  <span className="input-icon"><User size={16} /></span>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Enter your name (e.g. Madhi)"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <div className="input-container">
+                  <span className="input-icon"><Mail size={16} /></span>
+                  <input
+                    type="email"
+                    className="input-field"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="Enter your email (e.g. madhi13@gmail.com)"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Mobile Phone</label>
+                <div className="input-container">
+                  <span className="input-icon"><Smartphone size={16} /></span>
+                  <input
+                    type="tel"
+                    className="input-field"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="Enter 10-digit mobile number"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowEditProfile(false)}
+                  className="btn-secondary-outline"
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="submit-btn"
+                  style={{ flex: 2 }}
+                >
+                  <Save size={16} /> Save Profile Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* STRICT ROLE-BASED DASHBOARD RENDERING */}
       {userRole === 'Citizen' && (
