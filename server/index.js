@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './auth.js';
 import complaintsRoutes from './complaints.js';
-import { initDb, pool } from './db.js';
+import { initDb, pool, isDbConnected } from './db.js';
 
 dotenv.config();
 
@@ -22,10 +22,13 @@ app.use('/api/complaints', complaintsRoutes);
 app.get('/api/system/health', async (req, res) => {
   try {
     const dbTest = await pool.query('SELECT NOW() as current_time, COUNT(*) as user_count FROM users');
+    const isLiveNeon = isDbConnected();
     return res.json({
       status: 'operational',
       system: 'DrainWatch Smart Infrastructure System',
       dbConnected: true,
+      dbEngine: isLiveNeon ? 'Neon PostgreSQL (Live Cloud DB)' : 'Resilient In-Memory & Local Storage',
+      isLiveNeon,
       time: dbTest.rows[0].current_time,
       registeredUsers: parseInt(dbTest.rows[0].user_count, 10),
     });
