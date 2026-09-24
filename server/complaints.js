@@ -439,5 +439,80 @@ router.patch('/:id/field-update', async (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/complaints/:id/engineer-assessment
+ * Drainage Engineer Technical Infrastructure Assessment & Repair Recommendation:
+ * - Identifies root cause (e.g., undersized pipe, silt buildup, structural collapse, pump failure)
+ * - Recommends technical fix (cleaning, desilting, pipe redesign, culvert reconstruction, capacity upgrade)
+ * - Estimates repair cost (INR ₹) & machinery/material requirements for Municipal Authority budget approval
+ * - Marks hotspot as "structural risk" for AI model / GIS layer
+ * - Submits recommendation upward (Status: 'Technical Recommendation Submitted')
+ */
+router.patch('/:id/engineer-assessment', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      technicalCause,
+      recommendedFix,
+      estimatedCost,
+      requiredMachinery,
+      materialSpecs,
+      estimatedDuration,
+      isStructuralRisk,
+      structuralRiskLevel,
+      engineerNotes,
+      assessedBy,
+    } = req.body;
+
+    const newStatus = 'Technical Recommendation Submitted';
+
+    const updateRes = await pool.query(
+      `UPDATE complaints 
+       SET status = $1, 
+           technical_cause = $2, 
+           recommended_fix = $3, 
+           estimated_cost = $4, 
+           required_machinery = $5, 
+           material_specs = $6, 
+           estimated_duration = $7,
+           is_structural_risk = $8,
+           structural_risk_level = $9,
+           engineer_notes = $10,
+           assessed_by = $11,
+           assessed_at = CURRENT_TIMESTAMP
+       WHERE id = $12 OR complaint_id = $13
+       RETURNING *`,
+      [
+        newStatus,
+        technicalCause || 'Hydraulic Capacity Bottleneck',
+        recommendedFix || 'Desilting & Structural Repair',
+        parseInt(estimatedCost, 10) || 0,
+        requiredMachinery || '',
+        materialSpecs || '',
+        estimatedDuration || '24-48 Hours',
+        Boolean(isStructuralRisk),
+        structuralRiskLevel || (isStructuralRisk ? 'High Structural Risk' : 'None'),
+        engineerNotes || '',
+        assessedBy || 'Drainage Engineer',
+        isNaN(id) ? -1 : parseInt(id, 10),
+        id
+      ]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Complaint not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Technical repair recommendation submitted upward to Municipal Authority for budget review',
+      complaint: updateRes.rows[0]
+    });
+  } catch (error) {
+    console.error('Error recording engineer assessment:', error);
+    return res.status(500).json({ success: false, message: 'Failed to record technical recommendation' });
+  }
+});
+
 export default router;
 
