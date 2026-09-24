@@ -242,12 +242,14 @@ export default function CitizenComplaintModal({ isOpen, onClose, onSuccess, user
     setIsSubmitting(true);
     setErrorMsg('');
 
+    const calculatedRiskScore = calculatePreviewRisk(category, zone, waterLevel, locationAddress, description);
+
     const localComplaint = {
       id: Date.now(),
       complaint_id: `DW-CMP-${Math.floor(800 + Math.random() * 200)}`,
-      title: `${category} - ${locationAddress.slice(0, 35)}`,
+      title: `${category} - ${(locationAddress || 'Detected Location').slice(0, 35)}`,
       category,
-      location: locationAddress,
+      location: locationAddress || 'Detected Location',
       zone_criticality: zone,
       water_level_pct: waterLevel,
       risk_score: calculatedRiskScore,
@@ -257,10 +259,10 @@ export default function CitizenComplaintModal({ isOpen, onClose, onSuccess, user
       photo_url: photoData,
       latitude: coords?.lat || null,
       longitude: coords?.lng || null,
-      reported_by: user?.fullName || 'Madhi',
-      contact_phone: user?.phone || '8967452310',
+      reported_by: user?.fullName || 'Citizen Reporter',
+      contact_phone: user?.phone || '',
       user_id: user?.id || null,
-      user_email: user?.email || 'madhi13@gmail.com',
+      user_email: user?.email || '',
       created_at: new Date().toISOString(),
     };
 
