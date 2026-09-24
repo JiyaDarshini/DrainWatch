@@ -7,16 +7,21 @@ dotenv.config();
 
 const connectionString = process.env.DATABASE_URL;
 
-// Live PostgreSQL Pool
-const rawPool = new Pool({
-  connectionString,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000, // Quick timeout before falling back
-});
+// Live PostgreSQL Pool (initialized only when DATABASE_URL is provided)
+export const rawPool = connectionString
+  ? new Pool({
+      connectionString,
+      ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false },
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    })
+  : null;
+
+export let isNeonConnected = false;
+export function isDbConnected() {
+  return isNeonConnected;
+}
 
 // In-Memory Resilient Fallback Database
 export const memoryDb = {
@@ -668,7 +673,7 @@ function executeMemoryQuery(text, params = []) {
 // Resilient Pool Proxy
 export const pool = {
   async query(text, params) {
-    if (isNeonConnected) {
+    if (isNeonConnected && rawPool) {
       try {
         return await rawPool.query(text, params);
       } catch (err) {
@@ -680,7 +685,7 @@ export const pool = {
     return executeMemoryQuery(text, params);
   },
   async connect() {
-    if (isNeonConnected) {
+    if (isNeonConnected && rawPool) {
       try {
         return await rawPool.connect();
       } catch (err) {
@@ -695,6 +700,11 @@ export const pool = {
 };
 
 export async function initDb() {
+  if (!connectionString || !rawPool) {
+    console.log('ℹ️ No DATABASE_URL provided. Operating in high-performance in-memory resilient mode.');
+    isNeonConnected = false;
+    return false;
+  }
   console.log('🔄 Checking database connectivity...');
   try {
     const client = await rawPool.connect();
