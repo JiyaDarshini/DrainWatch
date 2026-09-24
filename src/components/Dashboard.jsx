@@ -25,6 +25,7 @@ import RiskComplaintsVisualizer from './RiskComplaintsVisualizer';
 import CitizenDashboard from './CitizenDashboard';
 import CitizenComplaintModal from './CitizenComplaintModal';
 import FieldInspectorDashboard from './FieldInspectorDashboard';
+import DrainageEngineerDashboard from './DrainageEngineerDashboard';
 
 export default function Dashboard({ user, onLogout }) {
   const [telemetry, setTelemetry] = useState([]);
@@ -314,69 +315,7 @@ export default function Dashboard({ user, onLogout }) {
       )}
 
       {userRole === 'Drainage Engineer' && (
-        <>
-          {/* Hydraulic Telemetry & Flow Surveillance Table */}
-          <div className="data-table-card">
-            <div className="table-header">
-              <div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--navy-900)' }}>
-                  Hydraulic Grid & Waterway Telemetry Surveillance
-                </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Live hydraulic sensor telemetry & hydrodynamic capacity tracking. Last sync: {lastRefreshed.toLocaleTimeString()}
-                </p>
-              </div>
-            </div>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table className="styled-table">
-                <thead>
-                  <tr>
-                    <th>Location & Basin</th>
-                    <th>Water Depth</th>
-                    <th>Flow Velocity</th>
-                    <th>Status</th>
-                    <th>Telemetry Node</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {telemetry.map((item) => (
-                    <tr key={item.id}>
-                      <td style={{ fontWeight: 600, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <MapPin size={16} color="var(--water-cyan)" />
-                        {item.location}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <div style={{ width: '80px', height: '6px', background: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
-                            <div
-                              style={{
-                                width: `${item.water_level_pct}%`,
-                                height: '100%',
-                                background: item.water_level_pct > 80 ? 'var(--danger-crimson)' : item.water_level_pct > 60 ? 'var(--warning-amber)' : 'var(--water-cyan)'
-                              }}
-                            ></div>
-                          </div>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{item.water_level_pct}%</span>
-                        </div>
-                      </td>
-                      <td style={{ fontFamily: 'var(--font-mono)' }}>{item.flow_rate_m3s || '5.4'} m³/s</td>
-                      <td>
-                        <span className={`badge-pill ${item.status.includes('Critical') ? 'badge-critical' : item.status.includes('Moderate') ? 'badge-warning' : 'badge-normal'}`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{item.reported_by}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Drainage Engineering Risk & Blockage Analysis */}
-          <RiskComplaintsVisualizer user={user} />
-        </>
+        <DrainageEngineerDashboard user={user} />
       )}
 
       {/* Fallback for unrecognized role */}
