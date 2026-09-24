@@ -282,16 +282,18 @@ function executeMemoryQuery(text, params = []) {
 
   // 4. INSERT into users
   if (lower.startsWith('insert into users')) {
-    const [full_name, email, phone, password_hash, role, is_phone_verified] = params;
+    const [full_name, email, phone, password_hash, role, assigned_zone, assigned_ward] = params;
     const newId = memoryDb.users.length > 0 ? Math.max(...memoryDb.users.map(u => u.id)) + 1 : 1;
     const newUser = {
       id: newId,
-      full_name,
-      email,
-      phone,
+      full_name: (full_name || '').toString().trim(),
+      email: (email || '').toString().trim().toLowerCase(),
+      phone: (phone || '').toString().trim().replace(/\s+/g, ''),
       password_hash,
       role: role || 'Citizen',
-      is_phone_verified: !!is_phone_verified,
+      is_phone_verified: false,
+      assigned_zone: assigned_zone || null,
+      assigned_ward: assigned_ward || null,
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -303,6 +305,8 @@ function executeMemoryQuery(text, params = []) {
         email: newUser.email,
         phone: newUser.phone,
         role: newUser.role,
+        assigned_zone: newUser.assigned_zone,
+        assigned_ward: newUser.assigned_ward,
         is_phone_verified: newUser.is_phone_verified,
         created_at: newUser.created_at
       }], 
@@ -323,7 +327,11 @@ function executeMemoryQuery(text, params = []) {
         return { rows: user ? [{ ...user }] : [], rowCount: user ? 1 : 0 };
       } else {
         const cleanPhone = (params[0] || '').toString().trim().replace(/\s+/g, '');
-        const user = memoryDb.users.find(u => u.phone.replace(/\s+/g, '') === cleanPhone);
+        let user = memoryDb.users.find(u => u.phone && u.phone.replace(/\s+/g, '') === cleanPhone);
+        if (!user && params[1]) {
+          const cleanEmail = (params[1] || '').toString().trim().toLowerCase();
+          user = memoryDb.users.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+        }
         if (user) {
           user.is_phone_verified = true;
           user.updated_at = new Date();
