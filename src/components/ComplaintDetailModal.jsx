@@ -689,6 +689,76 @@ export default function ComplaintDetailModal({
                 </div>
               </div>
 
+              {/* DRAINAGE ENGINEER TECHNICAL ASSESSMENT (If Available) */}
+              {(complaint.technical_cause || complaint.recommended_fix || complaint.estimated_cost) && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, #FFFFFF 100%)',
+                  border: '1px solid rgba(13, 148, 136, 0.3)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1.25rem',
+                  boxShadow: 'var(--shadow-sm)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Zap size={18} color="#0D9488" />
+                      <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--navy-900)', margin: 0 }}>
+                        Drainage Engineer Technical Assessment
+                      </h3>
+                    </div>
+                    {complaint.is_structural_risk && (
+                      <span className="badge-pill badge-critical" style={{ fontSize: '0.7rem' }}>
+                        <ShieldAlert size={12} /> Structural Risk GIS Tag
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem', fontSize: '0.82rem' }}>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 700 }}>Root Cause Diagnosis</div>
+                      <div style={{ fontWeight: 700, color: 'var(--navy-900)' }}>{complaint.technical_cause || 'Hydraulic Bottleneck'}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 700 }}>Recommended Fix</div>
+                      <div style={{ fontWeight: 700, color: '#0F766E' }}>{complaint.recommended_fix || 'Desilting & Reconstruction'}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 700 }}>Estimated Budget (₹)</div>
+                      <div style={{ fontWeight: 800, color: '#2563EB', fontFamily: 'var(--font-mono)' }}>
+                        ₹{(parseInt(complaint.estimated_cost, 10) || 0).toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 700 }}>Estimated Timeline</div>
+                      <div style={{ fontWeight: 700, color: 'var(--navy-900)' }}>{complaint.estimated_duration || '48 Hours'}</div>
+                    </div>
+                  </div>
+
+                  {complaint.required_machinery && (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
+                      <strong>Equipment Required:</strong> {complaint.required_machinery}
+                    </div>
+                  )}
+
+                  {complaint.material_specs && (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
+                      <strong>Material Specs:</strong> {complaint.material_specs}
+                    </div>
+                  )}
+
+                  {complaint.engineer_notes && (
+                    <div style={{ fontSize: '0.78rem', color: '#0F766E', background: 'rgba(13, 148, 136, 0.08)', padding: '0.5rem 0.75rem', borderRadius: '4px', marginTop: '0.5rem' }}>
+                      <strong>Engineer Remarks:</strong> {complaint.engineer_notes}
+                    </div>
+                  )}
+
+                  {complaint.assessed_by && (
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', textAlign: 'right' }}>
+                      Assessed by: <strong>{complaint.assessed_by}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Recommended Field Action Protocol */}
               <div style={{
                 background: '#FFFFFF',
