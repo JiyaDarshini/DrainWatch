@@ -54,6 +54,13 @@ export default function App() {
     }
   };
 
+  const handleUpdateUser = (updatedUser) => {
+    setUser(updatedUser);
+    if (updatedUser) {
+      localStorage.setItem('drainwatch_user', JSON.stringify(updatedUser));
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('drainwatch_token');
     localStorage.removeItem('drainwatch_user');
@@ -79,7 +86,7 @@ export default function App() {
       {/* Main View: Dashboard or Login/Signup */}
       <main>
         {user ? (
-          <Dashboard user={user} onLogout={handleLogout} />
+          <Dashboard user={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />
         ) : (
           <AuthModal onAuthSuccess={handleAuthSuccess} />
         )}
