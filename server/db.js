@@ -236,8 +236,6 @@ function seedDefaultUsers() {
 }
 seedDefaultUsers();
 
-let isNeonConnected = false;
-
 // Safe In-Memory Query Engine Fallback
 function executeMemoryQuery(text, params = []) {
   const sql = text.trim();
